@@ -7,17 +7,25 @@
     {% block extrastyle %}{% endblock extrastyle %}
 </head>
 
-<body class="g-sidenav-show bg-gray-100 {% block body %}{% endblock body %}">
-
-{% block sidebar %}
-
-{% endblock sidebar %}
+<body class="{% block body %}{% endblock body %} bg-secondary">
 
 <main class="main-content position-relative max-height-vh-100 h-100">
     {% block header %}
         {% include 'includes/top-bar.html' %}
     {% endblock header %}
-    {% block content %}{% endblock content %}
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated %}
+                {% block sidebar %}
+                    {% include 'includes/side-bar.html' %}
+                {% endblock sidebar %}
+            {% endif %}
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {% block content %}{% endblock content %}
+            </main>
+        </div>
+    </div>
     {% block footer %}
         {% include 'includes/footer.html' %}
     {% endblock footer %}
