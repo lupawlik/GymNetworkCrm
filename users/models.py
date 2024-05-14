@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.db import models
+from crm.models import BaseCompany
 
 
 class User(AbstractUser):
@@ -36,6 +37,7 @@ class AdminPanel(User):
 
 class AdminPanelProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    base_company = models.ForeignKey(BaseCompany, on_delete=models.SET_NULL, null=True)
 
 @receiver(post_save, sender=AdminPanel)
 def create_adminpanel_profile(sender, instance, created, **kwargs):
