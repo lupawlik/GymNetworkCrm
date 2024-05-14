@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from users.utils import panel_admin_allowed
-from crm.models import BaseCompany, BaseCompanyAddress
+from crm.models import BaseCompany, BaseCompanyAddress, Gym
 
 def dashboard(request):
     context = {
@@ -40,3 +40,42 @@ def complete_info_about_base_company(request):
         return redirect('index')
 
     return render(request, 'crm/complete_info_about_base_company.html', context)
+
+@panel_admin_allowed
+def network_gyms(request):
+    context = {
+        'parent': 'network',
+        'segment': 'gyms',
+    }
+
+    return render(request, 'crm/network_gyms.html', context)
+
+@panel_admin_allowed
+def network_employees(request):
+    context = {
+        'parent': 'network',
+        'segment': 'employees',
+    }
+
+    return render(request, 'crm/network_employees.html', context)
+
+@panel_admin_allowed
+def network_clients(request):
+    context = {
+        'parent': 'network',
+        'segment': 'clients',
+    }
+
+    return render(request, 'crm/network_clients.html', context)
+
+@panel_admin_allowed
+def gym_clients(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    context = {
+        'parent': 'your_gyms',
+        'gym_id': gym.id,
+        'segment': 'gym_clients'
+    }
+
+    return render(request, 'crm/network_clients.html', context)
