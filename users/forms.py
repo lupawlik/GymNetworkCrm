@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UsernameField, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UsernameField, UserCreationForm, PasswordChangeForm
 from django.utils.translation import gettext_lazy as _
 
 from users.models import User
@@ -52,3 +52,18 @@ class RegisterForm(UserCreationForm):
                 "placeholder": "Email"
             })
         }
+
+
+class UserPasswordChangeForm(PasswordChangeForm):
+    old_password = forms.CharField(max_length=100, widget=forms.PasswordInput(attrs={
+        'class': 'form-control',
+        "placeholder": "Old Password"
+    }), label='Old Password')
+    new_password1 = forms.CharField(max_length=100, widget=forms.PasswordInput(attrs={
+        'class': 'form-control',
+        "placeholder": "New Password"
+    }), label="New Password")
+    new_password2 = forms.CharField(max_length=100, widget=forms.PasswordInput(attrs={
+        'class': 'form-control',
+        "placeholder": "Confirm Password"
+    }), label="Confirm New Password")

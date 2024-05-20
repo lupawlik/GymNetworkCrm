@@ -2,8 +2,8 @@ import json
 
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.contrib.auth.views import LoginView
-from users.forms import LoginForm, RegisterForm
+from django.contrib.auth.views import LoginView, PasswordChangeView
+from users.forms import LoginForm, RegisterForm, UserPasswordChangeForm
 from django.contrib.auth.hashers import make_password
 from users.models import UserFactory, User
 from django.contrib.auth import logout
@@ -12,6 +12,8 @@ from django.contrib import messages
 
 from crm.models import Gym
 from users.utils import panel_admin_allowed, generate_username
+
+
 class LoginView(LoginView):
     template_name = 'users/login.html'
     form_class = LoginForm
@@ -21,6 +23,12 @@ class LoginView(LoginView):
             return redirect('index')
 
         return super().dispatch(request, *args, **kwargs)
+
+
+class ChangePasswordView(PasswordChangeView):
+    template_name = 'users/change-password.html'
+    form_class = UserPasswordChangeForm
+    success_url = reverse_lazy('index')
 
 
 def register(request):
@@ -43,13 +51,16 @@ def register(request):
 
     return render(request, 'users/register.html', {'form': form})
 
+
 def logout_user(request):
     logout(request)
     return redirect('login')
 
+
 @panel_admin_allowed
 def network_employees(request):
-    all_gyms = [{'id': gym.id, 'name': gym.name} for gym in Gym.objects.filter(base_company=request.user.adminpanelprofile.base_company)]
+    all_gyms = [{'id': gym.id, 'name': gym.name} for gym in
+                Gym.objects.filter(base_company=request.user.adminpanelprofile.base_company)]
     context = {
         'parent': 'network',
         'segment': 'employees',
@@ -83,7 +94,8 @@ def network_employees(request):
                 messages.success(request, f"Admin added. Temp password for {username} is: {password}")
 
             if request.POST.get('role') == 'EMPLOYEE':
-                gyms = Gym.objects.filter(id__in=request.POST.getlist('gyms[]'), base_company=request.user.adminpanelprofile.base_company)
+                gyms = Gym.objects.filter(id__in=request.POST.getlist('gyms[]'),
+                                          base_company=request.user.adminpanelprofile.base_company)
 
                 user = UserFactory.create_user(
                     user_type=User.Role.EMPLOYEE,
