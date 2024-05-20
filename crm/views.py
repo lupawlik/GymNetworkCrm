@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
-from users.utils import panel_admin_allowed
-from crm.models import BaseCompany, BaseCompanyAddress, Gym
+from users.utils import panel_admin_allowed, gym_employee_allowed
+from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress
 
 def dashboard(request):
     context = {
@@ -46,18 +46,30 @@ def network_gyms(request):
     context = {
         'parent': 'network',
         'segment': 'gyms',
+        'all_gyms': Gym.objects.filter(base_company=request.user.adminpanelprofile.base_company)
     }
+
+    if request.method == 'POST':
+        if request.POST.get('action') == 'add_gym':
+            gym_address = GymAddress.objects.create(
+                address_l1=request.POST.get('address_l1'),
+                address_l2=request.POST.get('address_l2'),
+                city=request.POST.get('city'),
+                zip_code=request.POST.get('zip_code'),
+                country=request.POST.get('country'),
+                email_address=request.POST.get('email'),
+                phone_nr=request.POST.get('phone_nr'),
+            )
+
+            Gym.objects.create(
+                name=request.POST.get('gym_name'),
+                base_company=request.user.adminpanelprofile.base_company,
+                address=gym_address,
+            )
+
+            return redirect('network_gyms')
 
     return render(request, 'crm/network_gyms.html', context)
-
-@panel_admin_allowed
-def network_employees(request):
-    context = {
-        'parent': 'network',
-        'segment': 'employees',
-    }
-
-    return render(request, 'crm/network_employees.html', context)
 
 @panel_admin_allowed
 def network_clients(request):
@@ -68,7 +80,7 @@ def network_clients(request):
 
     return render(request, 'crm/network_clients.html', context)
 
-@panel_admin_allowed
+@gym_employee_allowed
 def gym_clients(request, gym_id):
     gym = Gym.objects.get(id=gym_id)
 

@@ -1,0 +1,139 @@
+{% extends 'includes/struct.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'network_employees' %}">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-lg-8">
+                    <h3>Add new employee</h3></div>
+                <div class="col-lg-4 text-right d-flex flex-column justify-content-center">
+                    <button type="submit" class="btn btn-success" name="action" value="add_employee">
+                        Save
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12 col-sm-12">
+                                    <label>Role</label>
+                                    <select class="form-control" id="role" name="role" required>
+                                        {% for role in employees_roles %}
+                                            <option value="{{ role }}">{{ role }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12 col-sm-6">
+                                    <label>First name</label>
+                                    <input class="form-control" type="text" name="first_name" required
+                                           autocomplete="off"/>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <label>Last name</label>
+                                    <input class="form-control" type="text" name="last_name"/>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12 col-sm-6">
+                                    <label>Email</label>
+                                    <input class="form-control" type="email" name="email" required
+                                           autocomplete="off"/>
+                                </div>
+                            </div>
+                            <div class="row mt-2" id="additionalFields"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-8">
+                    <h3>Your Employees</h3>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <table id="employeesTable" class="display">
+                                <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Username</th>
+                                    <th>First name</th>
+                                    <th>Last name</th>
+                                    <th>Salary</th>
+                                    <th>Activity</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for employee in all_employees %}
+                                    <tr>
+                                        <td>{{ employee.role }}</td>
+                                        <td>{{ employee.username }}</td>
+                                        <td>{{ employee.first_name }}</td>
+                                        <td>{{ employee.last_name }}</td>
+                                        <td>{{ employee.employeeprofile.salary }}</td>
+                                        <td>{% if employee.last_activity %}{{ employee.last_activity }}{% endif %}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#employeesTable').DataTable(
+                {
+                    "scrollCollapse": true,
+                    "scrollY": '600px',
+                }
+            );
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const roleSelect = document.getElementById('role');
+            const additionalFieldsContainer = document.getElementById('additionalFields');
+            const gyms = JSON.parse('{{ all_gyms|escapejs }}');
+
+            roleSelect.addEventListener('change', function () {
+                if (roleSelect.value === 'EMPLOYEE') {
+                    additionalFieldsContainer.innerHTML = `
+                        <div class="col-12 col-sm-6">
+                            <label>Salary</label>
+                            <input class="form-control" type="number" name="salary" required/>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label>Gyms</label>
+                            <select class="form-control" name="gyms[]" multiple required>
+                                ${gyms.map(gym => `<option value="${gym.id}">${gym.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    additionalFieldsContainer.innerHTML = '';
+                }
+            });
+        });
+    </script>
+{% endblock content %}

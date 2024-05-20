@@ -8,3 +8,6 @@ admin.site.register(AdminPanelProfile)
 
 admin.site.register(Client)
 admin.site.register(ClientProfile)
+
+admin.site.register(Employee)
+admin.site.register(EmployeeProfile)

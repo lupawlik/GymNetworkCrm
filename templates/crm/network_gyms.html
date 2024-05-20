@@ -3,73 +3,112 @@
 
 {% block content %}
     <div class="container-fluid py-4">
-            <form method="post" action="{% url 'complete_info_about_base_company' %}">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-lg-8">
-                        <h3>Base information about your company</h3>
-                        <p class="text-danger">You have not added basic information about the company, in order to use the system further please complete this data</p>
-                    </div>
-                    <div class="col-lg-4 text-right d-flex flex-column justify-content-center">
-                        <button type="submit" class="btn btn-success ">
-                            Save information
-                        </button>
-                    </div>
+        <form method="post" action="{% url 'network_gyms' %}">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-lg-8">
+                    <h3>Add new gym</h3></div>
+                <div class="col-lg-4 text-right d-flex flex-column justify-content-center">
+                    <button type="submit" class="btn btn-success" name="action" value="add_gym">
+                        Save
+                    </button>
                 </div>
-                <div class="row mt-4">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-12 col-sm-12">
-                                        <label>NIP/VAT ID</label>
-                                        <input class="form-control" type="text" name="vat_id" required autocomplete="off"/>
-                                    </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12 col-sm-12">
+                                    <label>Gym name</label>
+                                    <input class="form-control" type="text" name="gym_name" required
+                                           autocomplete="off"/>
                                 </div>
-                                <div class="row">
-                                    <div class="col-12 col-sm-12">
-                                        <label>Company name</label>
-                                        <input class="form-control" type="text" name="company_name" required autocomplete="off"/>
-                                    </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-sm-6">
+                                    <label>Address line 1</label>
+                                    <input class="form-control" type="text" name="address_l1" required
+                                           autocomplete="off"/>
                                 </div>
-                                <div class="row">
-                                    <div class="col-12 col-sm-6">
-                                        <label>Address line 1</label>
-                                        <input class="form-control" type="text" name="address_l1" required autocomplete="off"/>
-                                    </div>
-                                    <div class="col-12 col-sm-6">
-                                        <label>Address line 2</label>
-                                        <input class="form-control" type="text" name="address_l2"/>
-                                    </div>
+                                <div class="col-12 col-sm-6">
+                                    <label>Address line 2</label>
+                                    <input class="form-control" type="text" name="address_l2"/>
                                 </div>
-                                <div class="row">
-                                    <div class="col-12 col-sm-6">
-                                        <label>City</label>
-                                        <input class="form-control" type="text" name="city" required autocomplete="off"/>
-                                    </div>
-                                    <div class="col-12 col-sm-2">
-                                        <label>Zip code</label>
-                                        <input class="form-control" type="text" name="zip_code" required autocomplete="off"/>
-                                    </div>
-                                    <div class="col-12 col-sm-4">
-                                        <label>Country</label>
-                                        <input class="form-control" type="text" name="country" required autocomplete="off"/>
-                                    </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-sm-6">
+                                    <label>City</label>
+                                    <input class="form-control" type="text" name="city" required autocomplete="off"/>
                                 </div>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <label>Contact E-mail</label>
-                                        <input class="form-control" type="text" name="email" required autocomplete="off"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <label>Contact phone number</label>
-                                        <input class="form-control" type="text" name="phone_nr" required autocomplete="off"/>
-                                    </div>
+                                <div class="col-12 col-sm-2">
+                                    <label>Zip code</label>
+                                    <input class="form-control" type="text" name="zip_code" required
+                                           autocomplete="off"/>
+                                </div>
+                                <div class="col-12 col-sm-4">
+                                    <label>Country</label>
+                                    <input class="form-control" type="text" name="country" required autocomplete="off"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label>Contact E-mail</label>
+                                    <input class="form-control" type="text" name="email" required autocomplete="off"/>
+                                </div>
+                                <div class="col-6">
+                                    <label>Contact phone number</label>
+                                    <input class="form-control" type="text" name="phone_nr" required
+                                           autocomplete="off"/>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-8">
+                    <h3>Your gyms</h3>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <table id="gymsTable" class="display">
+                                <thead>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>Name</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for gym in all_gyms %}
+                                    <tr>
+                                        <td>{{ gym.id }}</td>
+                                        <td>{{ gym.name }}</td>
+                                        <td>
+                                            <button class="btn btn-primary">Action</button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#gymsTable').DataTable(
+                {
+                    "scrollCollapse": true,
+                    "scrollY": '600px',
+                }
+            );
+        });
+    </script>
 {% endblock content %}

@@ -7,29 +7,31 @@
             <a href="{% url 'dashboard' %}"
                class="list-group-item list-group-item-action {% if 'dashboard' in segment %}active{% endif %}"
                aria-current="true">
-                <i class="fas fa-tachometer-alt fa-fw me-3"></i><span>Dashboard</span>
+                <i class="fas fa-chart-area fa-fw me-3"></i><span>Dashboard</span>
             </a>
             {% if user|is_admin_panel %}
                 <a href="#network"
                    class="list-group-item list-group-item-action py-2 {% if 'network' in parent %}active{% endif %}"
                    data-toggle="collapse" aria-controls="network">
-                    <i class="fas fa-chart-pie fa-fw me-3"></i><span>Network management</span>
+                    <i class="fas fa-list fa-fw me-3"></i><span>Network management</span>
                 </a>
                 <div class="collapse {% if 'network' in parent %}show{% endif %}" id="network">
-                    <div class="list-group">
+                    <div class="list-group ps-4">
                         <a href="{% url 'network_gyms' %}"
                            class="{% if 'gyms' in segment %}active{% endif %} list-group-item list-group-item-action">Gyms</a>
                         <a href="{% url 'network_employees' %}"
                            class="{% if 'employees' in segment %}active{% endif %} list-group-item list-group-item-action">Employees</a>
                         <a href="{% url 'network_clients' %}"
-                           class="{% if 'clients' in segment %}active{% endif %} list-group-item list-group-item-action">Clients</a>
+                           class="{% if 'clients' == segment %}active{% endif %} list-group-item list-group-item-action">Clients</a>
                     </div>
                 </div>
 
                 <a href="#" class="list-group-item list-group-item-action py-2 ">
-                    <i class="fas fa-chart-area fa-fw me-3"></i><span>Company settings</span>
+                    <i class="fas fa-wrench fa-fw me-3"></i><span>Company settings</span>
                 </a>
 
+            {% endif %}
+            {% if user|is_admin_panel or user|is_employee %}
                 {% get_my_gyms as gyms %}
 
                 {% if gyms %}
@@ -39,24 +41,24 @@
                         <i class="fas fa-building fa-fw me-3"></i><span>Your gyms</span>
                     </a>
                     <div class="collapse {% if 'your_gyms' in parent %}show{% endif %}" id="gyms">
-                    <div class="list-group">
-                        {% for gym in gyms %}
-                            <a href="#gym_{{ gym.id }}" data-toggle="collapse" aria-controls="gym_{{ gym.id }}"
-                               class="list-group-item list-group-item-action {% if gym_id == gym.id %}active{% endif %}"><i
-                                    class="fas fa-dumbbell fa-fw me-3"></i><span>{{ gym.name }}</span></a>
+                        <div class="list-group ps-4">
+                            {% for gym in gyms %}
+                                <a href="#gym_{{ gym.id }}" data-toggle="collapse" aria-controls="gym_{{ gym.id }}"
+                                   class="list-group-item list-group-item-action {% if gym_id == gym.id %}active{% endif %}"><i
+                                        class="fas fa-dumbbell fa-fw me-3"></i><span>{{ gym.name }}</span></a>
 
-                            <div class="collapse {% if gym_id == gym.id %}show{% endif %}" id="gym_{{ gym.id }}">
-                                <div class="list-group">
-                                    <a href="{% url 'gym_clients' gym_id=gym.id %}"
-                                       class="{% if 'gym_clients' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Clients</a>
+                                <div class="collapse {% if gym_id == gym.id %}show{% endif %}"
+                                     id="gym_{{ gym.id }}">
+                                    <div class="list-group ps-4">
+                                        <a href="{% url 'gym_clients' gym_id=gym.id %}"
+                                           class="{% if 'gym_clients' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Clients</a>
+                                    </div>
                                 </div>
-                            </div>
-                        {% endfor %}
-                    </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 {% endif %}
-
             {% endif %}
-            </div>
         </div>
+    </div>
 </nav>
