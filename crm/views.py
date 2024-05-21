@@ -4,14 +4,20 @@ from uuid import uuid4
 
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from users.utils import panel_admin_allowed, gym_employee_allowed
+from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_client, client_allowed
 from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress
 
 
-def dashboard(request):
+def index(request):
     context = {
         'segment': 'dashboard',
     }
+
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    if user_is_client(request.user):
+        return redirect('clients_gyms_list')
 
     return render(request, 'crm/dashboard.html', context)
 
@@ -148,3 +154,37 @@ def gym_details(request, gym_id):
         return redirect('gym_details', gym_id=gym_id)
 
     return render(request, 'crm/gyms/gym_details.html', context)
+
+@gym_employee_allowed
+def gym_opinions(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    context = {
+        'parent': 'your_gyms',
+        'gym_id': gym.id,
+        'segment': 'gym_opinions',
+        'gym': gym,
+        'ratings': gym.ratings.order_by('-created_at')
+    }
+
+    return render(request, 'crm/gyms/gym_opinions.html', context)
+
+# clients views
+@client_allowed
+def clients_gyms_list(request):
+    context = {
+        'segment': 'clients_gym_list',
+        'gyms': Gym.objects.all()
+    }
+    return render(request, 'crm/clients_side/gyms_list.html', context)
+
+
+@client_allowed
+def clients_gyms_details(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    context = {
+        'segment': 'clients_gym_list',
+        'gym': gym
+    }
+    return render(request, 'crm/clients_side/gym_details_clients.html', context)

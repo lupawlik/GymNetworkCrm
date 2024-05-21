@@ -1,0 +1,21 @@
+{% for response in responses %}
+    <div class="ml-4 mt-3 card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <h6 class="card-subtitle mb-2 text-muted">{{ response.user.username }}</h6>
+                <p class="card-text"><small class="text-muted">{{ response.created_at }}</small></p>
+            </div>
+            <p class="card-text">{{ response.comment }}</p>
+
+            <form method="post" action="{% url 'create_response_with_parent' gym_id=gym.id rating_id=rating.id parent_id=response.id %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea class="form-control" rows="1" name="comment" placeholder="Write a response"></textarea>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm">Respond</button>
+            </form>
+
+            {% include "crm/gyms/gym_opinion_responses.html" with responses=response.responses.all parent_id=response.id %}
+        </div>
+    </div>
+{% endfor %}

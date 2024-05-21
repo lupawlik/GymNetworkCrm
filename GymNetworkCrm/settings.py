@@ -27,6 +27,7 @@ INSTALLED_APPS = [
 
     "crm",
     "users",
+    "interactions"
 ]
 
 MIDDLEWARE = [

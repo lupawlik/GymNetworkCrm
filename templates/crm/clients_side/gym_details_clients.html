@@ -1,0 +1,115 @@
+{% extends 'includes/struct.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-lg-8">
+                <h3>Gym: {{ gym.name }} - {{ gym.base_company.company_name }}</h3>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link active" id="details-tab" data-toggle="tab" href="#details"
+                                   role="tab" aria-controls="details" aria-selected="true">Details</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="assortments-tab" data-toggle="tab" href="#assortments"
+                                   role="tab" aria-controls="assortments" aria-selected="false">Assortments</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="opinions-tab" data-toggle="tab" href="#opinions" role="tab"
+                                   aria-controls="opinions" aria-selected="false">Opinions</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content mt-3">
+                            <div class="tab-pane fade show active" id="details" role="tabpanel"
+                                 aria-labelledby="details-tab">
+                                sss
+                            </div>
+                            <div class="tab-pane fade" id="assortments" role="tabpanel"
+                                 aria-labelledby="assortments-tab">
+                                aaa
+                            </div>
+                            <div class="tab-pane fade" id="opinions" role="tabpanel" aria-labelledby="opinions-tab">
+                                <form method="post" action="{% url 'create_rating' gym_id=gym.id %}"
+                                      onsubmit="return validateForm()">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="opinion">Opinion:</label>
+                                        <textarea class="form-control" id="opinion" rows="3" name="comment"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="rating">Rating:</label>
+                                        <div id="rating" class="rating">
+                                            <span class="star fa fa-star" data-value="1"></span>
+                                            <span class="star fa fa-star" data-value="2"></span>
+                                            <span class="star fa fa-star" data-value="3"></span>
+                                            <span class="star fa fa-star" data-value="4"></span>
+                                            <span class="star fa fa-star" data-value="5"></span>
+                                        </div>
+                                        <input type="hidden" name="rating" id="rating_stars" value="0">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </form>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Opinie:</h5>
+                                        {% for rating in gym.ratings.all %}
+                                            <div class="card mb-3">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between">
+                                                        <h6 class="card-subtitle mb-2 text-muted">{{ rating.user.username }}
+                                                            - {{ rating.score }}/5</h6>
+                                                        <p class="card-text"><small
+                                                                class="text-muted">{{ rating.created_at }}</small></p>
+                                                    </div>
+                                                    <p class="card-text">{{ rating.comment }}</p>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function validateForm() {
+            var rating = document.getElementById('rating_stars').value;
+            if (!rating || rating === "0") {
+                alert("You need to set rating!");
+                return false;
+            }
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const stars = document.querySelectorAll('.star');
+
+            stars.forEach(function (star) {
+                star.addEventListener('click', function () {
+                    const value = parseInt(star.getAttribute('data-value'));
+                    document.getElementById('rating_stars').value = value;
+                    console.log(value);
+                    stars.forEach(function (s) {
+                        if (parseInt(s.getAttribute('data-value')) <= value) {
+                            s.classList.add('text-warning');
+                        } else {
+                            s.classList.remove('text-warning');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+{% endblock content %}

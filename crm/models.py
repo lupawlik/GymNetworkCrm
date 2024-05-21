@@ -52,3 +52,10 @@ class Gym(models.Model):
             return self.opening_time_from.strftime('%H:%M')
         else:
             return ''
+
+    def average_rating(self):
+        ratings = self.ratings.all()
+        if ratings:
+            return round(sum(rating.score for rating in ratings) / len(ratings), 1)
+
+        return
