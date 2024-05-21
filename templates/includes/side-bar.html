@@ -54,7 +54,7 @@
                                            class="{% if 'gym_assortment' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Assortment</a>
                                         <a href="{% url 'gym_clients' gym_id=gym.id %}"
                                            class="{% if 'gym_clients' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Clients</a>
-                                        <a href="{% url 'gym_clients' gym_id=gym.id %}"
+                                        <a href="{% url 'gym_details' gym_id=gym.id %}"
                                            class="{% if 'gym_details' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Details</a>
                                         <a href="{% url 'gym_clients' gym_id=gym.id %}"
                                            class="{% if 'gym_opinions' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Opinions</a>

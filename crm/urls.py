@@ -12,4 +12,5 @@ urlpatterns = [
 
     # gym details tab
     path('gym-details/<int:gym_id>/clients/', views.gym_clients, name="gym_clients"),
+    path('gym-details/<int:gym_id>/details/', views.gym_details, name="gym_details"),
 ]

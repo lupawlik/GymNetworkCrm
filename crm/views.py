@@ -1,6 +1,12 @@
+from PIL import Image
+from io import BytesIO
+from uuid import uuid4
+
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from users.utils import panel_admin_allowed, gym_employee_allowed
 from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress
+
 
 def dashboard(request):
     context = {
@@ -41,6 +47,7 @@ def complete_info_about_base_company(request):
 
     return render(request, 'crm/complete_info_about_base_company.html', context)
 
+
 @panel_admin_allowed
 def network_gyms(request):
     context = {
@@ -71,6 +78,7 @@ def network_gyms(request):
 
     return render(request, 'crm/network_gyms.html', context)
 
+
 @panel_admin_allowed
 def network_clients(request):
     context = {
@@ -79,6 +87,7 @@ def network_clients(request):
     }
 
     return render(request, 'crm/network_clients.html', context)
+
 
 @gym_employee_allowed
 def gym_clients(request, gym_id):
@@ -91,3 +100,51 @@ def gym_clients(request, gym_id):
     }
 
     return render(request, 'crm/network_clients.html', context)
+
+
+@gym_employee_allowed
+def gym_details(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    context = {
+        'parent': 'your_gyms',
+        'gym_id': gym.id,
+        'segment': 'gym_details',
+        'gym': gym
+    }
+
+    if request.method == "POST":
+        gym.name = request.POST.get('name')
+        gym.description = request.POST.get('description')
+
+        gym.opening_time_to = request.POST.get('opening_hours_to') if request.POST.get('opening_hours_to') else None
+        gym.opening_time_from = request.POST.get('opening_hours_from') if request.POST.get(
+            'opening_hours_from') else None
+
+        photo = request.FILES.get('image')
+        if photo:
+            try:
+                image = Image.open(photo)
+            except IOError:
+                return JsonResponse({'error': 'Unable to open image'}, status=400)
+
+            png_buffer = BytesIO()
+            image.save(png_buffer, format='PNG')
+            png_buffer.seek(0)
+
+            gym.image.save(f'gym_{gym.id}_{uuid4()}.png', png_buffer)
+
+        gym.address.address_l1 = request.POST.get('address_l1')
+        gym.address.address_l2 = request.POST.get('address_l2')
+        gym.address.city = request.POST.get('city')
+        gym.address.zip_code = request.POST.get('zip_code')
+        gym.address.country = request.POST.get('country')
+        gym.address.email_address = request.POST.get('email')
+        gym.address.phone_nr = request.POST.get('phone_nr')
+
+        gym.address.save()
+        gym.save()
+
+        return redirect('gym_details', gym_id=gym_id)
+
+    return render(request, 'crm/gyms/gym_details.html', context)

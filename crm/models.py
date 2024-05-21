@@ -33,5 +33,22 @@ class Gym(models.Model):
     base_company = models.ForeignKey(BaseCompany, null=False, on_delete=models.CASCADE, related_name='gyms')
     address = models.ForeignKey(GymAddress, on_delete=models.CASCADE, null=True, blank=False)
 
+    description = models.TextField(null=True, blank=True)
+    image = models.ImageField(upload_to='gym_images/', null=True, blank=True)
+    opening_time_from = models.TimeField(null=True, blank=True)
+    opening_time_to = models.TimeField(null=True, blank=True)
+
     def __str__(self):
         return f'{self.base_company.company_name} - {self.name}'
+
+    def formatted_opening_time_to(self):
+        if self.opening_time_to:
+            return self.opening_time_to.strftime('%H:%M')
+        else:
+            return ''
+
+    def formatted_opening_time_from(self):
+        if self.opening_time_from:
+            return self.opening_time_from.strftime('%H:%M')
+        else:
+            return ''
