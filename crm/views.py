@@ -12,7 +12,8 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect
 from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_client, client_allowed
 from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress, GymPricing
-from users.models import Ticket
+from users.models import Ticket, Client
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def index(request):
@@ -196,6 +197,7 @@ def gym_tickets(request, gym_id):
     context = {
         'parent': 'your_gyms',
         'gym_id': gym.id,
+        'gym': gym,
         'segment': 'gym_tickets',
         'tickets': Ticket.objects.filter(gym=gym).annotate(
             is_active=Case(
@@ -206,7 +208,31 @@ def gym_tickets(request, gym_id):
         ).order_by('-is_active', 'valid_until'),
     }
 
-    return render(request, 'crm/gyms/gym_tickets.html', context)
+    return render(request, 'crm/gyms/gym_tickets.html', context)\
+
+@require_POST
+@gym_employee_allowed
+def buy_gym_ticket_as_emp(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+    ticket_type = GymPricing.objects.get(gym=gym, name=request.POST.get('ticket_type'))
+    price = ticket_type.price * int(
+        request.POST.get('duration'))
+    ticket_until = datetime.now() + relativedelta(months=int(request.POST.get('duration')))
+
+    try:
+        user = Client.objects.get(username=request.POST.get('username'))
+    except ObjectDoesNotExist:
+        return redirect('gym_tickets', gym_id=gym.id)
+
+    Ticket.objects.create(
+        user=user,
+        gym=gym,
+        price=price,
+        valid_until=ticket_until,
+        ticket_type=ticket_type.name
+    )
+
+    return redirect('gym_tickets', gym_id=gym.id)
 
 
 # clients views

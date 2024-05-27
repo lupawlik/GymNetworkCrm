@@ -33,6 +33,51 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="mb-3">
+                <form method="post" action="{% url 'buy_gym_ticket_as_emp' gym_id=gym_id %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col">
+                                <label for="username" class="mr-2">Username:</label>
+                                <input type="text" id="username" class="form-control" name="username" autocomplete="off" required>
+
+                            </div>
+                            <div class="col">
+                                <label for="ticket_type" class="mr-2">Ticket Type:</label>
+                                <select id="ticket_type" class="form-control mr-2" name="ticket_type">
+                                    {% for pricing in gym.pricing.all %}
+                                        <option value="{{ pricing.name }}"
+                                                data-price="{{ pricing.price }}">{{ pricing.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label for="duration" class="mr-2">Duration (months):</label>
+                                <select id="duration" class="form-control mr-2" name="duration">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="4">4</option>
+                                    <option value="6">6</option>
+                                    <option value="12">12</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label for="total_price" class="mr-2">Total Price:</label>
+                                <input type="text" id="total_price" class="form-control" readonly>
+                            </div>
+                            <div class="col">
+                                <input type="hidden" name="gym_id" value="{{ gym.id }}">
+                                <button type="submit" class="btn btn-success form-control mt-4">
+                                    Buy Ticket
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
         <hr>
         <div class="row">
             <div class="col-lg-12">
@@ -57,7 +102,7 @@
                             {% for ticket in tickets %}
                                 <tr>
                                     <td>
-                                        <a href="{% url 'clients_gyms_details' gym_id=ticket.gym.id %}">{{ ticket.gym.name }}</a>
+                                        <a href="{% url 'gym_details' gym_id=ticket.gym.id %}">{{ ticket.gym.name }}</a>
                                     </td>
                                     <td>{{ ticket.ticket_type }}</td>
                                     <td>{{ ticket.user.username }}</td>
@@ -132,6 +177,26 @@
             });
 
             setInterval(updateTimers, 1000);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ticket_typeSelect = document.getElementById('ticket_type');
+            const durationSelect = document.getElementById('duration');
+            const total_priceInput = document.getElementById('total_price');
+
+            function calculatetotal_price() {
+                const selectedOption = ticket_typeSelect.options[ticket_typeSelect.selectedIndex];
+                const ticketPrice = parseFloat(selectedOption.getAttribute('data-price'));
+                const duration = parseInt(durationSelect.value);
+                const total_price = ticketPrice * duration;
+                total_priceInput.value = total_price.toFixed(2);
+            }
+
+            ticket_typeSelect.addEventListener('change', calculatetotal_price);
+            durationSelect.addEventListener('change', calculatetotal_price);
+
+            calculatetotal_price();
         });
     </script>
 {% endblock content %}
