@@ -1,0 +1,137 @@
+{% extends 'includes/struct.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="responseModalLabel">Ticket Check Result</h5>
+                </div>
+                <div class="modal-body" id="responseModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid py-4">
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h3>Gym tickets: {{ gym.name }}</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3">
+                <label for="checkTicketCode" class="form-label">Check client ticket</label>
+                <div class="input-group">
+                    <input type="text" id="checkTicketCode" class="form-control" placeholder="Enter ticket code">
+                    <button id="checkTicketBtn" class="btn btn-primary">Check</button>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card" style="max-height: 900px; overflow-y: auto;">
+                    <div class="card-body">
+                        <h5 class="card-title">Tickets:</h5>
+                        <table id="ticketsTable" class="display">
+                            <thead>
+                            <tr>
+                                <th>Gym</th>
+                                <th>Type</th>
+                                <th>Client username</th>
+                                <th>First name</th>
+                                <th>Last name</th>
+                                <th>Valid Until</th>
+                                <th>Time Remaining</th>
+                                <th>Usages</th>
+                                <th>Price</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for ticket in tickets %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'clients_gyms_details' gym_id=ticket.gym.id %}">{{ ticket.gym.name }}</a>
+                                    </td>
+                                    <td>{{ ticket.ticket_type }}</td>
+                                    <td>{{ ticket.user.username }}</td>
+                                    <td>{{ ticket.user.first_name }}</td>
+                                    <td>{{ ticket.user.last_name }}</td>
+                                    <td>{{ ticket.valid_until|date:"Y-m-d\\TH:i:s" }}</td>
+                                    <td class="timer"
+                                        data-valid-until="{{ ticket.valid_until|date:"Y-m-d\\TH:i:s" }}"></td>
+                                    <td>{{ ticket.summary_ticket_entrances }}</td>
+                                    <td>{{ ticket.price }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#ticketsTable').DataTable(
+                {
+                    "scrollCollapse": true,
+                    "scrollY": '800px',
+                }
+            );
+
+            function updateTimers() {
+                $('.timer').each(function () {
+                    const validUntil = new Date($(this).data('valid-until'));
+                    if (isNaN(validUntil)) {
+                        $(this).text("Invalid Date");
+                        return;
+                    }
+                    const timeRemaining = validUntil - new Date();
+
+                    if (timeRemaining > 0) {
+                        $(this).text(Math.floor(timeRemaining / (1000 * 60 * 60 * 24)) + "d " + Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)) + "h " + Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60)) + "m " + Math.floor((timeRemaining % (1000 * 60)) / 1000) + "s");
+                    } else {
+                        $(this).text("Expired");
+                    }
+                });
+            }
+
+            $('#checkTicketBtn').click(function () {
+                const ticketCode = $('#checkTicketCode').val().trim();
+
+                if (!ticketCode) {
+                    alert("Please enter a ticket code.");
+                    return;
+                }
+
+                $.ajax({
+                    url: "{% url 'validate_gym_ticket' gym_id=gym_id %}",
+                    method: 'POST',
+                    data: {
+                        code: ticketCode,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        $('#responseModalBody').text(response.text_response);
+                        $('#responseModal').modal('show');
+                    },
+                    error: function (xhr, status, error) {
+                        $('#responseModalBody').text('An error occurred: ' + xhr.responseText);
+                        $('#responseModal').modal('show');
+                    }
+                });
+            });
+
+            setInterval(updateTimers, 1000);
+        });
+    </script>
+{% endblock content %}

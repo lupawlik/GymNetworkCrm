@@ -14,9 +14,14 @@ urlpatterns = [
     path('gym-details/<int:gym_id>/clients/', views.gym_clients, name="gym_clients"),
     path('gym-details/<int:gym_id>/details/', views.gym_details, name="gym_details"),
     path('gym-details/<int:gym_id>/opinions/', views.gym_opinions, name="gym_opinions"),
+    path('gym-details/<int:gym_id>/tickets/', views.gym_tickets, name="gym_tickets"),
 
     # clients tabs
     path('gym-list', views.clients_gyms_list, name="clients_gyms_list"),
     path('gym-details-clients/<int:gym_id>/', views.clients_gyms_details, name="clients_gyms_details"),
+
+
+    path('gym-tickets/', views.clients_gyms_tickets, name="clients_gyms_tickets"),
+    path('buy-gym_ticket/', views.buy_gym_ticket_as_client, name="buy_gym_ticket_as_client"),
 
 ]

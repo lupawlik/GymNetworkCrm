@@ -17,8 +17,9 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Address</th>
-                                <th>Opening Time (From)</th>
-                                <th>Opening Time (To)</th>
+                                <th>Lowest price</th>
+                                <th>Highest price</th>
+                                <th>Rating</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -26,10 +27,11 @@
                                 <tr>
                                     <td><a href="{% url 'clients_gyms_details' gym_id=gym.id%}" class="btn link-success">{{ gym.name }} - {{ gym.base_company.company_name }}</a></td>
                                     <td>{{ gym.address }}</td>
-                                    <td>{% if gym.formatted_opening_time_from %}
-                                        {{ gym.formatted_opening_time_from }}{% endif %}</td>
-                                    <td>{% if gym.formatted_opening_time_to %}
-                                        {{ gym.formatted_opening_time_to }}{% endif %}</td>
+                                    <td>{% if gym.get_lowest_pricing %}
+                                        {{ gym.get_lowest_pricing }}{% endif %}</td>
+                                    <td>{% if gym.get_highest_pricing %}
+                                        {{ gym.get_highest_pricing }}{% endif %}</td>
+                                    <td>{% if gym.average_rating %}{{ gym.average_rating }}{% endif %}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>

@@ -63,8 +63,8 @@
                                            class="{% if 'gym_opinions' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Opinions</a>
                                         <a href="{% url 'gym_clients' gym_id=gym.id %}"
                                            class="{% if 'gym_services' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Services</a>
-                                        <a href="{% url 'gym_clients' gym_id=gym.id %}"
-                                           class="{% if 'gym_services' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Tickets</a>
+                                        <a href="{% url 'gym_tickets' gym_id=gym.id %}"
+                                           class="{% if 'gym_tickets' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Tickets</a>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -77,6 +77,11 @@
                    class="list-group-item list-group-item-action {% if 'clients_gym_list' in segment %}active{% endif %}"
                    aria-current="true">
                     <i class="fas fa-list fa-fw me-3"></i><span>All gyms list</span>
+                </a>
+                <a href="{% url 'clients_gyms_tickets' %}"
+                   class="list-group-item list-group-item-action {% if 'clients_gym_ticket' in segment %}active{% endif %}"
+                   aria-current="true">
+                    <i class="fas fa-door-open fa-fw me-3"></i><span>My tickets</span>
                 </a>
             {% endif %}
         </div>

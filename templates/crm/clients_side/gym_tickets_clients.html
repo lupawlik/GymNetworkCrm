@@ -1,0 +1,112 @@
+{% extends 'includes/struct.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="modal fade" id="codeModal" tabindex="-1" role="dialog" aria-labelledby="codeModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="codeModalLabel">Generated Code</h3>
+                </div>
+                <div class="modal-body">
+                    <h5 class="modal-title" id="codeModalLabel">Use this code to check your ticket!</h5>
+                    <hr>
+                    <h5 id="generatedCode" class="text-justify text-success"></h5>
+                    <p id="codeExpirationMessage" class="text-justify text-danger"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid py-4">
+        <table id="ticketsTable" class="display">
+            <thead>
+            <tr>
+                <th>Generate code</th>
+                <th>Gym</th>
+                <th>Type</th>
+                <th>Purchased At</th>
+                <th>Valid Until</th>
+                <th>Time Remaining</th>
+                <th>Usages</th>
+                <th>Price</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ticket in tickets %}
+                <tr>
+                    <td>
+                        {% if ticket.is_valid %}
+                            <button class="btn btn-primary generate-code-btn" data-ticket-id="{{ ticket.id }}"
+                                    data-gym-id="{{ ticket.gym.id }}">
+                                Generate code
+                            </button>
+                        {% else %}
+                            <span class="text-danger">Expired</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="{% url 'clients_gyms_details' gym_id=ticket.gym.id %}">{{ ticket.gym.name }}</a></td>
+                    <td>{{ ticket.ticket_type }}</td>
+                    <td>{{ ticket.created_at|date:"Y-m-d\\TH:i:s" }}</td>
+                    <td>{{ ticket.valid_until|date:"Y-m-d\\TH:i:s" }}</td>
+                    <td class="timer" data-valid-until="{{ ticket.valid_until|date:"Y-m-d\\TH:i:s" }}"></td>
+                    <td>{{ ticket.summary_ticket_entrances }}</td>
+                    <td>{{ ticket.price }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#ticketsTable').DataTable();
+            updateTimers();
+
+            function updateTimers() {
+                $('.timer').each(function () {
+                    const validUntil = new Date($(this).data('valid-until'));
+                    if (isNaN(validUntil)) {
+                        $(this).text("Invalid Date");
+                        return;
+                    }
+                    const timeRemaining = validUntil - new Date();
+
+                    if (timeRemaining > 0) {
+                        $(this).text(Math.floor(timeRemaining / (1000 * 60 * 60 * 24)) + "d " + Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)) + "h " + Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60)) + "m " + Math.floor((timeRemaining % (1000 * 60)) / 1000) + "s");
+                    } else {
+                        $(this).text("Expired");
+                    }
+                });
+            }
+
+            setInterval(updateTimers, 1000);
+        });
+    </script>
+    <script>
+        $('.generate-code-btn').click(function () {
+            const ticketId = $(this).data('ticket-id');
+            const gymId = $(this).data('gym-id');
+
+            $.ajax({
+                url: "{% url 'generate_ticket_temp_code' gym_id=0 %}".replace('0', gymId),
+                method: 'POST',
+                data: {
+                    ticket_id: ticketId,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    $('#generatedCode').text(response.code);
+                    $('#codeModal').modal('show');
+                },
+                error: function (error) {
+                    alert('An error occurred while generating the code.');
+                }
+            });
+        });
+    </script>
+{% endblock content %}

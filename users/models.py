@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.db import models
 from crm.models import BaseCompany, Gym
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -108,3 +109,23 @@ class UserFactory:
             return Client.objects.create(**kwargs)
         elif user_type == User.Role.EMPLOYEE:
             return Employee.objects.create(**kwargs)
+
+
+class Ticket(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE)
+    ticket_type = models.CharField(max_length=30, null=True, blank=False)
+    price = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    valid_until = models.DateTimeField(null=True)
+
+    def is_valid(self):
+        return timezone.now() < self.valid_until
+
+    def summary_ticket_entrances(self):
+        return self.entrances.all().count()
+
+
+class TicketEntrance(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='entrances')
+    entrance_at = models.DateTimeField(auto_now_add=True, null=True)

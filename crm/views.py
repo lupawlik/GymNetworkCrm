@@ -1,11 +1,18 @@
 from PIL import Image
 from io import BytesIO
 from uuid import uuid4
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
+from django.db.models import Case, When, BooleanField
+from django.utils import timezone
 
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect
 from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_client, client_allowed
-from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress
+from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress, GymPricing
+from users.models import Ticket
 
 
 def index(request):
@@ -116,44 +123,56 @@ def gym_details(request, gym_id):
         'parent': 'your_gyms',
         'gym_id': gym.id,
         'segment': 'gym_details',
-        'gym': gym
+        'gym': gym,
     }
 
-    if request.method == "POST":
-        gym.name = request.POST.get('name')
-        gym.description = request.POST.get('description')
+    if request.method == 'POST':
+        if request.POST.get('action') == 'edit_gym_info':
+            gym.name = request.POST.get('name')
+            gym.description = request.POST.get('description')
 
-        gym.opening_time_to = request.POST.get('opening_hours_to') if request.POST.get('opening_hours_to') else None
-        gym.opening_time_from = request.POST.get('opening_hours_from') if request.POST.get(
-            'opening_hours_from') else None
+            gym.opening_time_to = request.POST.get('opening_hours_to') if request.POST.get('opening_hours_to') else None
+            gym.opening_time_from = request.POST.get('opening_hours_from') if request.POST.get(
+                'opening_hours_from') else None
 
-        photo = request.FILES.get('image')
-        if photo:
-            try:
-                image = Image.open(photo)
-            except IOError:
-                return JsonResponse({'error': 'Unable to open image'}, status=400)
+            photo = request.FILES.get('image')
+            if photo:
+                try:
+                    image = Image.open(photo)
+                except IOError:
+                    return JsonResponse({'error': 'Unable to open image'}, status=400)
 
-            png_buffer = BytesIO()
-            image.save(png_buffer, format='PNG')
-            png_buffer.seek(0)
+                png_buffer = BytesIO()
+                image.save(png_buffer, format='PNG')
+                png_buffer.seek(0)
 
-            gym.image.save(f'gym_{gym.id}_{uuid4()}.png', png_buffer)
+                gym.image.save(f'gym_{gym.id}_{uuid4()}.png', png_buffer)
 
-        gym.address.address_l1 = request.POST.get('address_l1')
-        gym.address.address_l2 = request.POST.get('address_l2')
-        gym.address.city = request.POST.get('city')
-        gym.address.zip_code = request.POST.get('zip_code')
-        gym.address.country = request.POST.get('country')
-        gym.address.email_address = request.POST.get('email')
-        gym.address.phone_nr = request.POST.get('phone_nr')
+            gym.address.address_l1 = request.POST.get('address_l1')
+            gym.address.address_l2 = request.POST.get('address_l2')
+            gym.address.city = request.POST.get('city')
+            gym.address.zip_code = request.POST.get('zip_code')
+            gym.address.country = request.POST.get('country')
+            gym.address.email_address = request.POST.get('email')
+            gym.address.phone_nr = request.POST.get('phone_nr')
 
-        gym.address.save()
-        gym.save()
+            gym.address.save()
+            gym.save()
+
+        if request.POST.get('action') == 'add_pricing':
+            GymPricing.objects.create(
+                gym=gym,
+                name=request.POST.get('name'),
+                price=request.POST.get('price'),
+            )
+
+        if request.POST.get('action') == 'delete_pricing':
+            GymPricing.objects.get(id=request.POST.get('id_to_remove')).delete()
 
         return redirect('gym_details', gym_id=gym_id)
 
     return render(request, 'crm/gyms/gym_details.html', context)
+
 
 @gym_employee_allowed
 def gym_opinions(request, gym_id):
@@ -168,6 +187,27 @@ def gym_opinions(request, gym_id):
     }
 
     return render(request, 'crm/gyms/gym_opinions.html', context)
+
+
+@gym_employee_allowed
+def gym_tickets(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    context = {
+        'parent': 'your_gyms',
+        'gym_id': gym.id,
+        'segment': 'gym_tickets',
+        'tickets': Ticket.objects.filter(gym=gym).annotate(
+            is_active=Case(
+                When(valid_until__gt=timezone.now(), then=True),
+                default=False,
+                output_field=BooleanField()
+            )
+        ).order_by('-is_active', 'valid_until'),
+    }
+
+    return render(request, 'crm/gyms/gym_tickets.html', context)
+
 
 # clients views
 @client_allowed
@@ -185,6 +225,43 @@ def clients_gyms_details(request, gym_id):
 
     context = {
         'segment': 'clients_gym_list',
-        'gym': gym
+        'gym': gym,
+        'ratings': gym.ratings.order_by('-created_at')
     }
     return render(request, 'crm/clients_side/gym_details_clients.html', context)
+
+
+@client_allowed
+def clients_gyms_tickets(request):
+    context = {
+        'segment': 'clients_gym_ticket',
+        'tickets': Ticket.objects.filter(user=request.user).annotate(
+            is_active=Case(
+                When(valid_until__gt=timezone.now(), then=True),
+                default=False,
+                output_field=BooleanField()
+            )
+        ).order_by('-is_active', 'valid_until'),
+    }
+
+    return render(request, 'crm/clients_side/gym_tickets_clients.html', context)
+
+
+@client_allowed
+@require_POST
+def buy_gym_ticket_as_client(request):
+    gym = Gym.objects.get(id=request.POST.get('gym_id'))
+    ticket_type = GymPricing.objects.get(gym=gym, name=request.POST.get('ticket_type'))
+    price = ticket_type.price * int(
+        request.POST.get('duration'))
+    ticket_until = datetime.now() + relativedelta(months=int(request.POST.get('duration')))
+
+    Ticket.objects.create(
+        user=request.user,
+        gym=gym,
+        price=price,
+        valid_until=ticket_until,
+        ticket_type=ticket_type.name
+    )
+
+    return redirect('clients_gyms_details', gym_id=gym.id)

@@ -29,7 +29,89 @@
                         <div class="tab-content mt-3">
                             <div class="tab-pane fade show active" id="details" role="tabpanel"
                                  aria-labelledby="details-tab">
-                                sss
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        {% if gym.image %}
+                                            <img src="{{ gym.image.url }}" class="img-fluid rounded"
+                                                 alt="{{ gym.name }}" style="max-width: 300px;">
+                                        {% else %}
+                                            <img src="http://snapbuilder.com/code_snippet_generator/image_placeholder_generator/300x300/808080/DDDDDD/Blank"
+                                                 class="img-fluid rounded"
+                                                 alt="Placeholder Image">
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="col-md-8">
+                                        <h2>{{ gym.name }}</h2>
+                                        <p><strong>Base Company:</strong> {{ gym.base_company.company_name }}</p>
+                                        <p><strong>Address:</strong> {{ gym.address }}</p>
+                                        <p><strong>Description:</strong> {{ gym.description }}</p>
+                                        <p><strong>Opening Hours:</strong> {{ gym.opening_time_from }}
+                                            - {{ gym.opening_time_to }}</p>
+                                    </div>
+                                    <form method="post" action="{% url 'buy_gym_ticket_as_client' %}">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <label for="ticket_type" class="mr-2">Ticket Type:</label>
+                                                    <select id="ticket_type" class="form-control mr-2" name="ticket_type">
+                                                        {% for pricing in gym.pricing.all %}
+                                                            <option value="{{ pricing.name }}"
+                                                                    data-price="{{ pricing.price }}">{{ pricing.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col">
+                                                    <label for="duration" class="mr-2">Duration (months):</label>
+                                                    <select id="duration" class="form-control mr-2" name="duration">
+                                                        <option value="1">1</option>
+                                                        <option value="2">2</option>
+                                                        <option value="4">4</option>
+                                                        <option value="6">6</option>
+                                                        <option value="12">12</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col">
+                                                    <label for="total_price" class="mr-2">Total Price:</label>
+                                                    <input type="text" id="total_price" class="form-control" readonly>
+
+                                                </div>
+                                                <div class="col">
+                                                    <input type="hidden" name="gym_id" value="{{ gym.id }}">
+                                                    <button type="submit" class="btn btn-success form-control mt-4">
+                                                        Buy Ticket
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="row mt-4"><h4>Additional information</h4></div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {% if gym.pricing.all %}
+                                            <table class="table table-striped">
+                                                <tbody>
+                                                {% for pricing in gym.pricing.all %}
+                                                    <tr>
+                                                        <td>{{ pricing.name }}</td>
+                                                        <td>{{ pricing.price }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        {% else %}
+                                            <h5>There is no pricing info</h5>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Rating:</strong> {{ gym.average_rating }}</p>
+                                        <p><strong>Number of comments:</strong> {{ gym.ratings.count }}</p>
+                                        <p><strong>Number of clients:</strong> TODO</p>
+                                    </div>
+                                </div>
                             </div>
                             <div class="tab-pane fade" id="assortments" role="tabpanel"
                                  aria-labelledby="assortments-tab">
@@ -56,22 +138,52 @@
                                     </div>
                                     <button type="submit" class="btn btn-primary">Submit</button>
                                 </form>
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Opinie:</h5>
-                                        {% for rating in gym.ratings.all %}
-                                            <div class="card mb-3">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-between">
-                                                        <h6 class="card-subtitle mb-2 text-muted">{{ rating.user.username }}
-                                                            - {{ rating.score }}/5</h6>
-                                                        <p class="card-text"><small
-                                                                class="text-muted">{{ rating.created_at }}</small></p>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="card" style="max-height: 900px; overflow-y: auto;">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Ratings:</h5>
+                                                {% for rating in ratings %}
+                                                    <div class="card mb-3">
+                                                        <div class="card-body">
+                                                            <div class="d-flex justify-content-between">
+                                                                <h6 class="mb-2 {% if rating.user == request.user %} font-weight-bold text-success {% endif %}">{{ rating.user.username }}
+                                                                    - {{ rating.score }}/5</h6>
+                                                                <p class="card-text"><small
+                                                                        class="text-muted">{{ rating.created_at }}</small>
+                                                                </p>
+                                                            </div>
+                                                            <p class="card-text">{{ rating.comment }}</p>
+                                                            {% if rating.user == request.user %}
+                                                                <form method="post"
+                                                                      action="{% url 'delete_rating' rating_id=rating.id gym_id=gym.id %}"
+                                                                      class="d-inline">
+                                                                    {% csrf_token %}
+                                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                                        Delete
+                                                                    </button>
+                                                                </form>
+                                                            {% endif %}
+
+                                                            <form method="post"
+                                                                  action="{% url 'create_response' gym_id=gym.id rating_id=rating.id %}">
+                                                                {% csrf_token %}
+                                                                <div class="form-group">
+                                                                    <textarea class="form-control" rows="1"
+                                                                              name="comment"
+                                                                              placeholder="Write a response"></textarea>
+                                                                </div>
+                                                                <button type="submit"
+                                                                        class="btn btn-secondary btn-sm mt-4">Respond
+                                                                </button>
+                                                            </form>
+
+                                                            {% include "crm/gyms/gym_opinion_responses.html" with responses=rating.responses.all parent_id=rating.id gym=gym %}
+                                                        </div>
                                                     </div>
-                                                    <p class="card-text">{{ rating.comment }}</p>
-                                                </div>
+                                                {% endfor %}
                                             </div>
-                                        {% endfor %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -83,6 +195,25 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ticket_typeSelect = document.getElementById('ticket_type');
+            const durationSelect = document.getElementById('duration');
+            const total_priceInput = document.getElementById('total_price');
+
+            function calculatetotal_price() {
+                const selectedOption = ticket_typeSelect.options[ticket_typeSelect.selectedIndex];
+                const ticketPrice = parseFloat(selectedOption.getAttribute('data-price'));
+                const duration = parseInt(durationSelect.value);
+                const total_price = ticketPrice * duration;
+                total_priceInput.value = total_price.toFixed(2);
+            }
+
+            ticket_typeSelect.addEventListener('change', calculatetotal_price);
+            durationSelect.addEventListener('change', calculatetotal_price);
+
+            calculatetotal_price();
+        });
+
         function validateForm() {
             var rating = document.getElementById('rating_stars').value;
             if (!rating || rating === "0") {

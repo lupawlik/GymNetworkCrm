@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class BaseAddressModel(models.Model):
     address_l1 = models.CharField(max_length=250)
     address_l2 = models.CharField(max_length=250, null=True, blank=True)
@@ -17,6 +16,7 @@ class BaseAddressModel(models.Model):
 class BaseCompanyAddress(BaseAddressModel):
     pass
 
+
 class BaseCompany(models.Model):
     vat_id = models.CharField(max_length=40, null=True, blank=False)
     company_name = models.CharField(max_length=100)
@@ -25,8 +25,10 @@ class BaseCompany(models.Model):
     def __str__(self):
         return f'{self.company_name}, {self.vat_id}'
 
+
 class GymAddress(BaseAddressModel):
     pass
+
 
 class Gym(models.Model):
     name = models.CharField(max_length=60, null=True, blank=True)
@@ -59,3 +61,19 @@ class Gym(models.Model):
             return round(sum(rating.score for rating in ratings) / len(ratings), 1)
 
         return
+
+    def get_lowest_pricing(self):
+        if self.pricing.exists():
+            return self.pricing.order_by('price').first().price
+        return None
+
+    def get_highest_pricing(self):
+        if self.pricing.exists():
+            return self.pricing.order_by('-price').first().price
+        return None
+
+
+class GymPricing(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='pricing')
+    name = models.CharField(max_length=50)
+    price = models.FloatField()

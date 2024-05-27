@@ -11,3 +11,5 @@ admin.site.register(ClientProfile)
 
 admin.site.register(Employee)
 admin.site.register(EmployeeProfile)
+
+admin.site.register(Ticket)
