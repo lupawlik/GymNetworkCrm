@@ -87,7 +87,6 @@
                         <table id="ticketsTable" class="display">
                             <thead>
                             <tr>
-                                <th>Gym</th>
                                 <th>Type</th>
                                 <th>Client username</th>
                                 <th>First name</th>
@@ -101,9 +100,6 @@
                             <tbody>
                             {% for ticket in tickets %}
                                 <tr>
-                                    <td>
-                                        <a href="{% url 'gym_details' gym_id=ticket.gym.id %}">{{ ticket.gym.name }}</a>
-                                    </td>
                                     <td>{{ ticket.ticket_type }}</td>
                                     <td>{{ ticket.user.username }}</td>
                                     <td>{{ ticket.user.first_name }}</td>

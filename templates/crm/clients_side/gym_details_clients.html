@@ -48,6 +48,20 @@
                                         <p><strong>Description:</strong> {{ gym.description }}</p>
                                         <p><strong>Opening Hours:</strong> {{ gym.opening_time_from }}
                                             - {{ gym.opening_time_to }}</p>
+
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="promotionsCheckbox" {% if promotions %} checked {% endif %}>
+                                            <label class="form-check-label" for="promotionsCheckbox">
+                                                I agree to participate in promotions
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="newsletterCheckbox" {% if newsletter %} checked {% endif %}>
+                                            <label class="form-check-label" for="newsletterCheckbox">
+                                                Sign up for the newsletter
+                                            </label>
+                                        </div>
                                     </div>
                                     <form method="post" action="{% url 'buy_gym_ticket_as_client' %}">
                                         {% csrf_token %}
@@ -55,7 +69,8 @@
                                             <div class="row">
                                                 <div class="col">
                                                     <label for="ticket_type" class="mr-2">Ticket Type:</label>
-                                                    <select id="ticket_type" class="form-control mr-2" name="ticket_type">
+                                                    <select id="ticket_type" class="form-control mr-2"
+                                                            name="ticket_type">
                                                         {% for pricing in gym.pricing.all %}
                                                             <option value="{{ pricing.name }}"
                                                                     data-price="{{ pricing.price }}">{{ pricing.name }}</option>
@@ -238,6 +253,30 @@
                             s.classList.remove('text-warning');
                         }
                     });
+                });
+            });
+        });
+
+        $(document).ready(function () {
+            $('#promotionsCheckbox').on('change', function () {
+                $.ajax({
+                    url: "{% url 'change_promotion_agree' gym_id=gym.id %}",
+                    method: "POST",
+                    data: {
+                        'status': $(this).is(':checked'),
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                });
+            });
+
+            $('#newsletterCheckbox').on('change', function () {
+                $.ajax({
+                    url: "{% url 'change_newsletter_agree' gym.id %}",
+                    method: "POST",
+                    data: {
+                        'status': $(this).is(':checked'),
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
                 });
             });
         });

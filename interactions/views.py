@@ -1,6 +1,6 @@
 from random import randrange
 from crm.models import Gym
-from interactions.models import Rating, RatingResponse, TicketTempCode
+from interactions.models import Rating, RatingResponse, TicketTempCode, NewsletterAgree, PromotionsAgree
 from django.http import JsonResponse
 from users.utils import client_allowed
 from users.models import Ticket, TicketEntrance
@@ -126,3 +126,45 @@ def validate_gym_ticket(request, gym_id):
     )
 
     return JsonResponse({'text_response': f'Valid ticket! Until: {ticket.valid_until}'})
+
+
+@require_POST
+@client_allowed
+def change_promotion_agree(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    status = True if request.POST.get('status') == 'true' else False
+
+    if status:
+        PromotionsAgree.objects.get_or_create(
+            gym=gym,
+            user=request.user
+        )
+    else:
+        PromotionsAgree.objects.get(
+            gym=gym,
+            user=request.user
+        ).delete()
+
+    return JsonResponse({'ok': 200})
+
+
+@require_POST
+@client_allowed
+def change_newsletter_agree(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    status = True if request.POST.get('status') == 'true' else False
+
+    if status:
+        NewsletterAgree.objects.get_or_create(
+            gym=gym,
+            user=request.user
+        )
+    else:
+        NewsletterAgree.objects.get(
+            gym=gym,
+            user=request.user
+        ).delete()
+
+    return JsonResponse({'ok': 200})

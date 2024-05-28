@@ -49,3 +49,18 @@ class TicketTempCode(models.Model):
 
     def __str__(self):
         return f'Code for {self.user.username} at {self.gym.name} - {self.code}'
+
+
+class Agreement(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class PromotionsAgree(Agreement):
+    def __str__(self):
+        return f'Promotion agree for {self.user.username} in gym {self.gym.name}'
+
+class NewsletterAgree(Agreement):
+    def __str__(self):
+        return f'Newsletter agree for {self.user.username} in gym {self.gym.name}'
+

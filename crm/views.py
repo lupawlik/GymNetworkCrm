@@ -14,6 +14,7 @@ from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_clien
 from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress, GymPricing
 from users.models import Ticket, Client
 from django.core.exceptions import ObjectDoesNotExist
+from interactions.models import NewsletterAgree, PromotionsAgree
 
 
 def index(request):
@@ -106,11 +107,25 @@ def network_clients(request):
 @gym_employee_allowed
 def gym_clients(request, gym_id):
     gym = Gym.objects.get(id=gym_id)
+    tickets = Ticket.objects.filter(gym=gym).select_related('user')
+    status_filter = request.GET.get('status', 'all')
+
+    clients = {}
+    for ticket in tickets:
+        if ticket.user not in clients:
+            clients[ticket.user] = ticket.is_valid()
+
+    if status_filter == 'active':
+        clients = {user: is_valid for user, is_valid in clients.items() if is_valid}
+    elif status_filter == 'inactive':
+        clients = {user: is_valid for user, is_valid in clients.items() if not is_valid}
 
     context = {
         'parent': 'your_gyms',
         'gym_id': gym.id,
-        'segment': 'gym_clients'
+        'segment': 'gym_clients',
+        'clients': clients,
+        'status_filter': status_filter,
     }
 
     return render(request, 'crm/network_clients.html', context)
@@ -208,7 +223,7 @@ def gym_tickets(request, gym_id):
         ).order_by('-is_active', 'valid_until'),
     }
 
-    return render(request, 'crm/gyms/gym_tickets.html', context)\
+    return render(request, 'crm/gyms/gym_tickets.html', context)
 
 @require_POST
 @gym_employee_allowed
@@ -252,7 +267,9 @@ def clients_gyms_details(request, gym_id):
     context = {
         'segment': 'clients_gym_list',
         'gym': gym,
-        'ratings': gym.ratings.order_by('-created_at')
+        'ratings': gym.ratings.order_by('-created_at'),
+        'promotions': True if PromotionsAgree.objects.filter(gym=gym, user=request.user) else False,
+        'newsletter': True if NewsletterAgree.objects.filter(gym=gym, user=request.user) else False,
     }
     return render(request, 'crm/clients_side/gym_details_clients.html', context)
 

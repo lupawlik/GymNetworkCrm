@@ -6,3 +6,7 @@ admin.site.register(Rating)
 admin.site.register(RatingResponse)
 
 admin.site.register(TicketTempCode)
+
+admin.site.register(Agreement)
+admin.site.register(NewsletterAgree)
+admin.site.register(PromotionsAgree)

@@ -3,22 +3,71 @@
 
 {% block content %}
     <div class="container-fluid py-4">
-            <form method="post" action="{% url 'complete_info_about_base_company' %}">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-lg-8">
-                        <h3>Clients</h3>
-                    </div>
-                </div>
-                <div class="row mt-4">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
+        <div class="row">
+            <div class="col-lg-8">
+                <h3>Clients</h3>
+            </div>
+        </div>
 
+        <div class="row mt-4">
+
+            <div class="col-lg-12">
+                <div class="card">
+
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="statusFilter">Filter by Status:</label>
+                                <select id="statusFilter" class="form-control" onchange="filterClients()">
+                                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>
+                                        Active
+                                    </option>
+                                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>
+                                        Inactive
+                                    </option>
+                                </select>
                             </div>
                         </div>
+                        <table id="clientsTable" class="display">
+                            <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Is Active</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for user, is_active in clients.items %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{% if is_active %}Active{% else %}Inactive{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#clientsTable').DataTable(
+                {
+                    "scrollCollapse": true,
+                    "scrollY": '1000px',
+                }
+            );
+        });
+
+        function filterClients() {
+            var status = document.getElementById('statusFilter').value;
+            var url = new URL(window.location.href);
+            url.searchParams.set('status', status);
+            window.location.href = url.href;
+        }
+    </script>
 {% endblock content %}

@@ -14,4 +14,8 @@ urlpatterns = [
     path('tickets/<int:gym_id>/generate/', views.generate_ticket_temp_code, name="generate_ticket_temp_code"),
     path('tickets/<int:gym_id>/validate/', views.validate_gym_ticket, name="validate_gym_ticket"),
 
+    # agree
+    path('agree/<int:gym_id>/promotions/', views.change_promotion_agree, name="change_promotion_agree"),
+    path('agree/<int:gym_id>/newsletter/', views.change_newsletter_agree, name="change_newsletter_agree"),
+
 ]
