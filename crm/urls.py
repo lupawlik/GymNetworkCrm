@@ -3,8 +3,12 @@ from crm import views
 
 urlpatterns = [
     path('', views.index, name="index"),
+
+    path('complete-infoa-bout-base-company/', views.complete_info_about_base_company,
+         name="complete_info_about_base_company"),
+    # dashboard
     path('dashboard/', views.index, name="dashboard"),
-    path('complete-infoa-bout-base-company/', views.complete_info_about_base_company, name="complete_info_about_base_company"),
+    path('dashboard/<int:gym_id>/get_data/', views.get_dashboard_data, name="get_dashboard_data"),
 
     # network tab
     path('network/gyms', views.network_gyms, name="network_gyms"),
@@ -20,7 +24,6 @@ urlpatterns = [
     # clients tabs
     path('gym-list', views.clients_gyms_list, name="clients_gyms_list"),
     path('gym-details-clients/<int:gym_id>/', views.clients_gyms_details, name="clients_gyms_details"),
-
 
     path('gym-tickets/', views.clients_gyms_tickets, name="clients_gyms_tickets"),
     path('buy-gym_ticket/', views.buy_gym_ticket_as_client, name="buy_gym_ticket_as_client"),

@@ -1,20 +1,23 @@
+import calendar
 from PIL import Image
 from io import BytesIO
 from uuid import uuid4
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from django.db.models import Case, When, BooleanField
+from django.db.models import Case, When, BooleanField, Count, Sum
 from django.utils import timezone
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect
-from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_client, client_allowed
+from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_client, user_is_panel_admin, \
+    user_is_employee, client_allowed
 from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress, GymPricing
-from users.models import Ticket, Client
+from users.models import Ticket, Client, TicketEntrance
 from django.core.exceptions import ObjectDoesNotExist
 from interactions.models import NewsletterAgree, PromotionsAgree
+from django.db.models.functions import ExtractMonth
 
 
 def index(request):
@@ -28,7 +31,74 @@ def index(request):
     if user_is_client(request.user):
         return redirect('clients_gyms_list')
 
+    if user_is_employee(request.user):
+        gyms = request.user.employeeprofile.gyms.all()
+    elif user_is_panel_admin(request.user):
+        gyms = request.user.adminpanelprofile.base_company.gyms.all()
+
+    context['gyms'] = gyms
+    context['current_year'] = timezone.now().year
+
     return render(request, 'crm/dashboard.html', context)
+
+
+@gym_employee_allowed
+def get_dashboard_data(request, gym_id):
+    year = int(request.POST.get('year', timezone.now().year))
+
+    if gym_id:
+        gym = Gym.objects.get(id=gym_id)
+        year = int(request.POST.get('year'))
+        data = {
+            'labels': [calendar.month_name[i] for i in range(1, 13)],
+            'active_tickets': [],
+            'purchased_tickets': [],
+            'tickets_usage': [],
+            'avg_ticket_price_for_new_client': [],
+            'new_clients': [],
+            'earnings': []
+        }
+
+        for month in range(1, 13):
+            start_date = datetime(year, month, 1)
+            end_date = datetime(year, month, calendar.monthrange(year, month)[1])
+
+            active_tickets_count = Ticket.objects.filter(
+                gym=gym,
+                created_at__lte=end_date,
+                valid_until__gte=start_date
+            ).count()
+            data['active_tickets'].append(active_tickets_count)
+
+            purchased_tickets = Ticket.objects.filter(
+                gym=gym,
+                created_at__year=year,
+                created_at__month=month
+            )
+            data['purchased_tickets'].append(purchased_tickets.count())
+
+            ticket_usage = TicketEntrance.objects.filter(
+                ticket__gym_id=gym.id,
+                entrance_at__year=year,
+                entrance_at__month=month
+            ).count()
+
+            data['tickets_usage'].append(ticket_usage)
+
+            new_clients_count = Ticket.objects.filter(
+                gym=gym,
+                created_at__year=year,
+                created_at__month=month,
+            ).values('user').annotate(ticket_count=Count('id')).filter(ticket_count=1).count()
+            data['new_clients'].append(new_clients_count)
+
+
+            earnings = purchased_tickets.aggregate(total_earnings=Sum('price'))['total_earnings'] or 0
+            data['earnings'].append(earnings)
+
+        return JsonResponse(data)
+    else:
+        return JsonResponse({'error': 'No gym selected'}, status=400)
 
 
 @panel_admin_allowed
@@ -224,6 +294,7 @@ def gym_tickets(request, gym_id):
     }
 
     return render(request, 'crm/gyms/gym_tickets.html', context)
+
 
 @require_POST
 @gym_employee_allowed
