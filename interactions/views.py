@@ -49,8 +49,6 @@ def create_response(request, gym_id, rating_id, parent_id=None):
     rating = get_object_or_404(Rating, pk=rating_id)
     parent_response = get_object_or_404(RatingResponse, pk=parent_id) if parent_id else None
 
-    print(parent_response)
-
     comment = request.POST.get('comment')
 
     if comment:
@@ -168,3 +166,20 @@ def change_newsletter_agree(request, gym_id):
         ).delete()
 
     return JsonResponse({'ok': 200})
+
+@require_POST
+@gym_employee_allowed
+def export_users_agreement(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+    export_type = request.POST.get('type')
+
+    if export_type == 'newsletter':
+        users = NewsletterAgree.objects.filter(gym=gym)
+    elif export_type == 'promotion':
+        users = PromotionsAgree.objects.filter(gym=gym)
+    else:
+        return JsonResponse({'error': 'Invalid export type'}, status=400)
+
+    print(users)
+    user_data = "\n".join([f"{user.user.username} ({user.user.email})" for user in users])
+    return JsonResponse({'users': user_data})

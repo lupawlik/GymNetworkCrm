@@ -17,5 +17,6 @@ urlpatterns = [
     # agree
     path('agree/<int:gym_id>/promotions/', views.change_promotion_agree, name="change_promotion_agree"),
     path('agree/<int:gym_id>/newsletter/', views.change_newsletter_agree, name="change_newsletter_agree"),
+    path('agree/<int:gym_id>/export/', views.export_users_agreement, name="export_users_agreement"),
 
 ]

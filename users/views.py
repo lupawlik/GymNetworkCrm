@@ -1,6 +1,7 @@
 import json
 
-from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from users.forms import LoginForm, RegisterForm, UserPasswordChangeForm
@@ -11,7 +12,7 @@ from django.db.models import Q
 from django.contrib import messages
 
 from crm.models import Gym
-from users.utils import panel_admin_allowed, generate_username
+from users.utils import panel_admin_allowed, generate_username, client_allowed
 
 
 class LoginView(LoginView):
@@ -59,15 +60,44 @@ def logout_user(request):
     return redirect('login')
 
 
+@client_allowed
+def toggle_favorite_gym(request):
+    if request.method == 'POST':
+        gym_id = request.POST.get('gym_id')
+        gym = get_object_or_404(Gym, id=gym_id)
+
+        if gym in request.user.clientprofile.favorites_gyms.all():
+            request.user.clientprofile.favorites_gyms.remove(gym)
+            return JsonResponse({'status': 'removed'})
+        else:
+            request.user.clientprofile.favorites_gyms.add(gym)
+            return JsonResponse({'status': 'added'})
+
+    return JsonResponse({'status': 'error'}, status=400)
+
+
 @panel_admin_allowed
 def network_employees(request):
     all_gyms = [{'id': gym.id, 'name': gym.name} for gym in
                 Gym.objects.filter(base_company=request.user.adminpanelprofile.base_company)]
+
+    all_employees_temp = User.objects.filter(Q(role=User.Role.ADMIN_PANEL) | Q(role=User.Role.EMPLOYEE))
+    all_employees = []
+
+    for emp in all_employees_temp:
+        if emp.role == User.Role.ADMIN_PANEL:
+            if emp.adminpanelprofile.base_company == request.user.adminpanelprofile.base_company:
+                all_employees.append(emp)
+
+        if emp.role == User.Role.EMPLOYEE:
+            if emp.employeeprofile.base_company == request.user.adminpanelprofile.base_company:
+                all_employees.append(emp)
+
     context = {
         'parent': 'network',
         'segment': 'employees',
         'all_gyms': json.dumps(all_gyms),
-        'all_employees': User.objects.filter(Q(role=User.Role.ADMIN_PANEL) | Q(role=User.Role.EMPLOYEE)),
+        'all_employees': all_employees,
         'employees_roles': [User.Role.ADMIN_PANEL, User.Role.EMPLOYEE]
 
     }

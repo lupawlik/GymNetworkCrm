@@ -15,7 +15,12 @@ urlpatterns = [
     path('network/clients', views.network_clients, name="network_clients"),
 
     # gym details tab
+    path('gym-details/<int:gym_id>/assortment/', views.gym_assortment, name="gym_assortment"),
+    path('gym-details/<int:gym_id>/services/', views.gym_service, name="gym_service"),
     path('gym-details/<int:gym_id>/clients/', views.gym_clients, name="gym_clients"),
+    path('gym-details/<int:gym_id>/client-details/<int:client_id>', views.client_details, name="client_details"),
+
+
     path('gym-details/<int:gym_id>/details/', views.gym_details, name="gym_details"),
     path('gym-details/<int:gym_id>/opinions/', views.gym_opinions, name="gym_opinions"),
     path('gym-details/<int:gym_id>/tickets/', views.gym_tickets, name="gym_tickets"),

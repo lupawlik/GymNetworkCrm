@@ -3,15 +3,11 @@ from unidecode import unidecode
 from functools import wraps
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
-from users.models import User
+from users.models import User, Ticket
 from crm.models import Gym
 
 def user_is_panel_admin(user):
     return True if user.role == User.Role.ADMIN_PANEL else False
-
-def user_is_client(user):
-    return True if user.role == User.Role.CLIENT else False
-
 def user_is_employee(user):
     return True if user.role == User.Role.EMPLOYEE else False
 
@@ -48,6 +44,8 @@ def gym_employee_allowed(fnc):
 
     return wrapper
 
+def user_is_client(user):
+    return True if user.role == User.Role.CLIENT else False
 
 def client_allowed(fnc):
     @wraps(fnc)
@@ -72,3 +70,7 @@ def generate_username(first_name, last_name):
         counter += 1
 
     return username
+
+
+def check_if_client_is_connected_with_gym(gym, client):
+    return Ticket.objects.filter(user=client, gym=gym).exists()

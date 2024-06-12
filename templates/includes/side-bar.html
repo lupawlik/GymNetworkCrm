@@ -53,7 +53,7 @@
                                 <div class="collapse {% if gym_id == gym.id %}show{% endif %}"
                                      id="gym_{{ gym.id }}">
                                     <div class="list-group ps-4">
-                                        <a href="{% url 'gym_clients' gym_id=gym.id %}"
+                                        <a href="{% url 'gym_assortment' gym_id=gym.id %}"
                                            class="{% if 'gym_assortment' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Assortment</a>
                                         <a href="{% url 'gym_clients' gym_id=gym.id %}"
                                            class="{% if 'gym_clients' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Clients</a>
@@ -61,7 +61,7 @@
                                            class="{% if 'gym_details' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Details</a>
                                         <a href="{% url 'gym_opinions' gym_id=gym.id %}"
                                            class="{% if 'gym_opinions' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Opinions</a>
-                                        <a href="{% url 'gym_clients' gym_id=gym.id %}"
+                                        <a href="{% url 'gym_service' gym_id=gym.id %}"
                                            class="{% if 'gym_services' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Services</a>
                                         <a href="{% url 'gym_tickets' gym_id=gym.id %}"
                                            class="{% if 'gym_tickets' in segment and gym_id == gym.id %}active{% endif %} list-group-item list-group-item-action">Tickets</a>

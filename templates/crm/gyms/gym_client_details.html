@@ -1,0 +1,102 @@
+{% extends 'includes/struct.html' %}
+{% load static %}
+
+{% block content %}
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-lg-8">
+                <h3>Client: {{ client.first_name }} {{ client.last_name }} ({{ client.username }})</h3>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Client Information</h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <tbody>
+                                        <tr>
+                                            <th scope="row">First Name</th>
+                                            <td>{{ client.first_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Last Name</th>
+                                            <td>{{ client.last_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Username</th>
+                                            <td>{{ client.username }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Email</th>
+                                            <td>{{ client.email }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Last Activity</th>
+                                            <td>{{ client.last_login }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Role</th>
+                                            <td>
+                                                {{ client.role }}
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <ul>
+                                    <li>Number of all entrances for gym {{ gym.name }}: <span
+                                            class="fw-bold">{{ total_entrances }}</span></li>
+                                    <li>Has promotion agree: <span class="fw-bold">{{ has_promotion_agree }}</span></li>
+                                    <li>Has newsletter agree: <span class="fw-bold">{{ has_newsletter_agree }}</span>
+                                    </li>
+                                    <li>Last entrance: <span class="fw-bold">
+                                        {% if earliest_entrance %}
+                                            {{ earliest_entrance }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </span></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <h5 class="card-title mt-4">Tickets</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th scope="col">Ticket Type</th>
+                                    <th scope="col">Price</th>
+                                    <th scope="col">Created At</th>
+                                    <th scope="col">Valid Until</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for ticket in tickets %}
+                                    <tr>
+                                        <td>{{ ticket.ticket_type }}</td>
+                                        <td>{{ ticket.price }}</td>
+                                        <td>{{ ticket.created_at }}</td>
+                                        <td>{{ ticket.valid_until }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+    </script>
+{% endblock content %}

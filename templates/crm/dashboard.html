@@ -104,120 +104,157 @@
                 </div>
             </div>
         </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const gymSelect = document.getElementById('gymSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            const ctx = document.getElementById('ticketsChart').getContext('2d');
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const gymSelect = document.getElementById('gymSelect');
-                const yearSelect = document.getElementById('yearSelect');
-                const ctx = document.getElementById('ticketsChart').getContext('2d');
-
-                let ticketsChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: [],
-                        datasets: [{
-                            label: 'Active tickets',
-                            data: [],
-                            borderWidth: 1
-                        }, {
-                            label: 'Purchased tickets',
-                            data: [],
-                            borderWidth: 1
-                        }, {
-                            label: 'Tickets activations',
-                            data: [],
-                            yAxisID: 'activations',
-                            borderWidth: 3,
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                            },
-                            activations: {
-                                position: 'right',
-                                beginAtZero: true,
-                            },
-                        }
-                    }
-                });
-
-                let clientsChart = new Chart(document.getElementById('clientsChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: [],
-                        datasets: [{
-                            label: 'New Clients',
-                            data: [],
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-
-                let earningsChart = new Chart(document.getElementById('earningsChart'), {
-                    type: 'line',
-                    data: {
-                        labels: [],
-                        datasets: [{
-                            label: 'Earnings',
-                            data: [],
-                            fill: false,
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-
-                function updateChart() {
-                    $.ajax({
-                        url: "{% url 'get_dashboard_data' gym_id=0 %}".replace('0', parseInt(gymSelect.value)),
-                        method: "POST",
-                        data: {
-                            year: parseInt(yearSelect.value),
-                            csrfmiddlewaretoken: '{{ csrf_token }}'
+            let ticketsChart = new Chart(ctx, {
+                type: 'bar',
+                responsive: true,
+                maintainAspectRatio: false,
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Active tickets',
+                        data: [],
+                        borderWidth: 1
+                    }, {
+                        label: 'Purchased tickets',
+                        data: [],
+                        borderWidth: 1
+                    }, {
+                        label: 'Tickets activations',
+                        data: [],
+                        yAxisID: 'activations',
+                        borderWidth: 3,
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
                         },
-                        success: function (data) {
-                            if (data.error) {
-                                alert(data.error);
-                                return;
-                            }
-                            ticketsChart.data.labels = data.labels;
-                            ticketsChart.data.datasets[0].data = data.active_tickets;
-                            ticketsChart.data.datasets[1].data = data.purchased_tickets;
-                            ticketsChart.data.datasets[2].data = data.tickets_usage;
-                            ticketsChart.update();
-
-                            clientsChart.data.labels = data.labels;
-                            clientsChart.data.datasets[0].data = data.new_clients;
-                            clientsChart.update();
-
-                            earningsChart.data.labels = data.labels;
-                            earningsChart.data.datasets[0].data = data.earnings;
-                            earningsChart.update();
-                        }
-                    });
+                        activations: {
+                            position: 'right',
+                            beginAtZero: true,
+                        },
+                    }
                 }
+            });
 
-                gymSelect.addEventListener('change', updateChart);
-                yearSelect.addEventListener('change', updateChart);
-                updateChart();
+            let clientsChart = new Chart(document.getElementById('clientsChart'), {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'New Clients',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
 
-            })
-        </script>
+            let earningsChart = new Chart(document.getElementById('earningsChart'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Earnings',
+                        data: [],
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            let otherChart = new Chart(document.getElementById('otherChart'), {
+                type: 'bar',
+                responsive: true,
+                maintainAspectRatio: false,
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Promotions Agree',
+                        data: [],
+                        borderWidth: 1,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                    }, {
+                        label: 'Newsletter Agree',
+                        data: [],
+                        borderWidth: 1,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                        },
+                    }
+                }
+            });
+
+            function updateChart() {
+                $.ajax({
+                    url: "{% url 'get_dashboard_data' gym_id=0 %}".replace('0', parseInt(gymSelect.value)),
+                    method: "POST",
+                    data: {
+                        year: parseInt(yearSelect.value),
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function (data) {
+                        if (data.error) {
+                            alert(data.error);
+                            return;
+                        }
+                        ticketsChart.data.labels = data.labels;
+                        ticketsChart.data.datasets[0].data = data.active_tickets;
+                        ticketsChart.data.datasets[1].data = data.purchased_tickets;
+                        ticketsChart.data.datasets[2].data = data.tickets_usage;
+                        ticketsChart.update();
+
+                        clientsChart.data.labels = data.labels;
+                        clientsChart.data.datasets[0].data = data.new_clients;
+                        clientsChart.update();
+
+                        earningsChart.data.labels = data.labels;
+                        earningsChart.data.datasets[0].data = data.earnings;
+                        earningsChart.update();
+
+                        otherChart.data.labels = data.labels;
+                        otherChart.data.datasets[0].data = data.promotions_agree;
+                        otherChart.data.datasets[1].data = data.newsletter_agree;
+                        otherChart.update();
+                    }
+                });
+            }
+
+            gymSelect.addEventListener('change', updateChart);
+            yearSelect.addEventListener('change', updateChart);
+            updateChart();
+
+        })
+    </script>
+
 {% endblock content %}

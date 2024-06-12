@@ -22,6 +22,10 @@
                                    role="tab" aria-controls="assortments" aria-selected="false">Assortments</a>
                             </li>
                             <li class="nav-item" role="presentation">
+                                <a class="nav-link" id="services-tab" data-toggle="tab" href="#services" role="tab"
+                                   aria-controls="services" aria-selected="false">Services</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
                                 <a class="nav-link" id="opinions-tab" data-toggle="tab" href="#opinions" role="tab"
                                    aria-controls="opinions" aria-selected="false">Opinions</a>
                             </li>
@@ -51,13 +55,15 @@
 
 
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="promotionsCheckbox" {% if promotions %} checked {% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="promotionsCheckbox"
+                                                    {% if promotions %} checked {% endif %}>
                                             <label class="form-check-label" for="promotionsCheckbox">
                                                 I agree to participate in promotions
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="newsletterCheckbox" {% if newsletter %} checked {% endif %}>
+                                            <input class="form-check-input" type="checkbox" id="newsletterCheckbox"
+                                                    {% if newsletter %} checked {% endif %}>
                                             <label class="form-check-label" for="newsletterCheckbox">
                                                 Sign up for the newsletter
                                             </label>
@@ -130,7 +136,49 @@
                             </div>
                             <div class="tab-pane fade" id="assortments" role="tabpanel"
                                  aria-labelledby="assortments-tab">
-                                aaa
+                                <h4>Assortments</h4>
+                                <table class="table table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Brand</th>
+                                        <th>Quantity</th>
+                                        <th>Image</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for item in gym.assortments.all %}
+                                        <tr>
+                                            <td>{{ item.name }}</td>
+                                            <td>{{ item.brand }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td><img src="{{ item.image.url }}" alt="{{ item.name }}" width="150"></td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+                                <h4>Services</h4>
+                                <table class="table table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Image</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for service in gym.services.all %}
+                                        <tr>
+                                            <td>{{ service.name }}</td>
+                                            <td>{{ service.description }}</td>
+                                            <td><img src="{{ service.image.url }}" alt="{{ service.name }}" width="50">
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
                             <div class="tab-pane fade" id="opinions" role="tabpanel" aria-labelledby="opinions-tab">
                                 <form method="post" action="{% url 'create_rating' gym_id=gym.id %}"

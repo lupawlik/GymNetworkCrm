@@ -101,7 +101,7 @@
                             {% for ticket in tickets %}
                                 <tr>
                                     <td>{{ ticket.ticket_type }}</td>
-                                    <td>{{ ticket.user.username }}</td>
+                                    <td><a href="{% url 'client_details' gym_id=gym_id client_id=ticket.user.id %}">{{ ticket.user.username }}</a></td>
                                     <td>{{ ticket.user.first_name }}</td>
                                     <td>{{ ticket.user.last_name }}</td>
                                     <td>{{ ticket.valid_until|date:"Y-m-d\\TH:i:s" }}</td>

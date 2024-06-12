@@ -77,3 +77,19 @@ class GymPricing(models.Model):
     gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='pricing')
     name = models.CharField(max_length=50)
     price = models.FloatField()
+
+
+class Assortment(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='assortments')
+    name = models.CharField(max_length=100)
+    brand = models.CharField(max_length=50)
+    quantity = models.IntegerField(default=0)
+    image = models.ImageField(upload_to='assortments/', null=True, blank=True)
+
+
+class Services(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='services')
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    image = models.ImageField(upload_to='services/', null=True, blank=True)
+

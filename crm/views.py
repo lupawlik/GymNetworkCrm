@@ -5,19 +5,18 @@ from uuid import uuid4
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from django.db.models import Case, When, BooleanField, Count, Sum
+from django.db.models import Case, When, BooleanField, Sum, Min
 from django.utils import timezone
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect
 from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_client, user_is_panel_admin, \
-    user_is_employee, client_allowed
-from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress, GymPricing
+    user_is_employee, client_allowed, check_if_client_is_connected_with_gym
+from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress, GymPricing, Assortment, Services
 from users.models import Ticket, Client, TicketEntrance
 from django.core.exceptions import ObjectDoesNotExist
 from interactions.models import NewsletterAgree, PromotionsAgree
-from django.db.models.functions import ExtractMonth
 
 
 def index(request):
@@ -30,6 +29,9 @@ def index(request):
 
     if user_is_client(request.user):
         return redirect('clients_gyms_list')
+
+    if request.user.is_superuser:
+        return redirect('/admin/')
 
     if user_is_employee(request.user):
         gyms = request.user.employeeprofile.gyms.all()
@@ -48,7 +50,6 @@ def get_dashboard_data(request, gym_id):
 
     if gym_id:
         gym = Gym.objects.get(id=gym_id)
-        year = int(request.POST.get('year'))
         data = {
             'labels': [calendar.month_name[i] for i in range(1, 13)],
             'active_tickets': [],
@@ -56,7 +57,9 @@ def get_dashboard_data(request, gym_id):
             'tickets_usage': [],
             'avg_ticket_price_for_new_client': [],
             'new_clients': [],
-            'earnings': []
+            'earnings': [],
+            'promotions_agree': [],
+            'newsletter_agree': []
         }
 
         for month in range(1, 13):
@@ -82,19 +85,31 @@ def get_dashboard_data(request, gym_id):
                 entrance_at__year=year,
                 entrance_at__month=month
             ).count()
-
             data['tickets_usage'].append(ticket_usage)
 
             new_clients_count = Ticket.objects.filter(
                 gym=gym,
                 created_at__year=year,
                 created_at__month=month,
-            ).values('user').annotate(ticket_count=Count('id')).filter(ticket_count=1).count()
+            ).values('user').distinct().count()
             data['new_clients'].append(new_clients_count)
-
 
             earnings = purchased_tickets.aggregate(total_earnings=Sum('price'))['total_earnings'] or 0
             data['earnings'].append(earnings)
+
+            promotions_agree_count = PromotionsAgree.objects.filter(
+                gym=gym,
+                created_at__year=year,
+                created_at__month=month
+            ).count()
+            data['promotions_agree'].append(promotions_agree_count)
+
+            newsletter_agree_count = NewsletterAgree.objects.filter(
+                gym=gym,
+                created_at__year=year,
+                created_at__month=month
+            ).count()
+            data['newsletter_agree'].append(newsletter_agree_count)
 
         return JsonResponse(data)
     else:
@@ -190,6 +205,10 @@ def gym_clients(request, gym_id):
     elif status_filter == 'inactive':
         clients = {user: is_valid for user, is_valid in clients.items() if not is_valid}
 
+    for client in clients:
+        client.summary_entrances = TicketEntrance.objects.filter(ticket__user=client, ticket__gym_id=gym.id).count()
+        client.bought_tickets = Ticket.objects.filter(user=client, gym_id=gym.id).count()
+
     context = {
         'parent': 'your_gyms',
         'gym_id': gym.id,
@@ -198,7 +217,37 @@ def gym_clients(request, gym_id):
         'status_filter': status_filter,
     }
 
-    return render(request, 'crm/network_clients.html', context)
+    return render(request, 'crm/gyms/gym_clients.html', context)
+
+
+@gym_employee_allowed
+def client_details(request, gym_id, client_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    try:
+        client = Client.objects.get(id=client_id)
+    except ObjectDoesNotExist:
+        return redirect('gym_clients', gym_id=gym_id)
+
+    if not check_if_client_is_connected_with_gym(gym, client):
+        return redirect('gym_clients', gym_id=gym_id)
+
+    tickets = Ticket.objects.filter(user=client, gym=gym)
+    entrances = TicketEntrance.objects.filter(ticket__in=tickets)
+    total_entrances = entrances.count()
+    earliest_entrance = entrances.aggregate(Min('entrance_at'))['entrance_at__min']
+
+    context = {
+        'gym': gym,
+        'client': client,
+        'tickets': tickets,
+        'total_entrances': total_entrances,
+        'has_promotion_agree': PromotionsAgree.objects.filter(gym=gym, user=client).exists(),
+        'has_newsletter_agree': NewsletterAgree.objects.filter(gym=gym, user=client).exists(),
+        'earliest_entrance': earliest_entrance,
+    }
+
+    return render(request, 'crm/gyms/gym_client_details.html', context)
 
 
 @gym_employee_allowed
@@ -276,6 +325,129 @@ def gym_opinions(request, gym_id):
 
 
 @gym_employee_allowed
+def gym_assortment(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    context = {
+        'parent': 'your_gyms',
+        'gym_id': gym.id,
+        'segment': 'gym_assortment',
+        'gym': gym,
+        'assortment': gym.assortments.all()
+    }
+
+    if request.method == "POST":
+
+        if request.POST.get('action') == 'add_assortment':
+            assortment = Assortment.objects.create(
+                gym=gym,
+                name=request.POST.get('name'),
+                brand=request.POST.get('brand'),
+                quantity=int(request.POST.get('quantity'))
+            )
+
+            photo = request.FILES.get('image')
+            if photo:
+                try:
+                    image = Image.open(photo)
+                except IOError:
+                    return JsonResponse({'error': 'Unable to open image'}, status=400)
+
+                png_buffer = BytesIO()
+                image.save(png_buffer, format='PNG')
+                png_buffer.seek(0)
+
+                assortment.image.save(f'assortment_{gym.id}_{uuid4()}.png', png_buffer)
+
+            return redirect('gym_assortment', gym_id=gym_id)
+
+        if request.POST.get('action') == 'remove_assortment':
+            assortment = Assortment.objects.get(id=request.POST.get('assortment_id'))
+
+            if assortment.gym == gym:
+                assortment.delete()
+                return JsonResponse({'Msg': 'removed'}, status=200)
+
+            return JsonResponse({'Msg': 'You dont have access'}, status=403)
+
+        if request.POST.get('action') == 'edit_assortment':
+            assortment = Assortment.objects.get(id=request.POST.get('assortment_id'))
+
+            if assortment.gym == gym:
+                assortment.name = request.POST.get('name')
+                assortment.brand = request.POST.get('brand')
+                assortment.quantity = request.POST.get('quantity')
+
+                assortment.save()
+
+                return redirect('gym_assortment', gym_id=gym_id)
+
+            return JsonResponse({'Msg': 'You dont have access'}, status=403)
+
+    return render(request, 'crm/gyms/gym_assortment.html', context)
+
+
+@gym_employee_allowed
+def gym_service(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    context = {
+        'parent': 'your_gyms',
+        'gym_id': gym.id,
+        'segment': 'gym_services',
+        'gym': gym,
+        'services': gym.services.all()
+    }
+
+    if request.method == "POST":
+        if request.POST.get('action') == 'add_service':
+            service = Services.objects.create(
+                gym=gym,
+                name=request.POST.get('name'),
+                description=request.POST.get('description'),
+            )
+
+            photo = request.FILES.get('image')
+            if photo:
+                try:
+                    image = Image.open(photo)
+                except IOError:
+                    return JsonResponse({'error': 'Unable to open image'}, status=400)
+
+                png_buffer = BytesIO()
+                image.save(png_buffer, format='PNG')
+                png_buffer.seek(0)
+
+                service.image.save(f'service_{gym.id}_{uuid4()}.png', png_buffer)
+
+            return redirect('gym_service', gym_id=gym_id)
+
+    if request.POST.get('action') == 'remove_service':
+        service = Services.objects.get(id=request.POST.get('service_id'))
+
+        if service.gym == gym:
+            service.delete()
+            return JsonResponse({'Msg': 'removed'}, status=200)
+
+        return JsonResponse({'Msg': 'You dont have access'}, status=403)
+
+    if request.POST.get('action') == 'edit_service':
+        service = Services.objects.get(id=request.POST.get('service_id'))
+
+        if service.gym == gym:
+            service.name = request.POST.get('name')
+            service.description = request.POST.get('description')
+
+            service.save()
+
+            return redirect('gym_service', gym_id=gym_id)
+
+        return JsonResponse({'Msg': 'You dont have access'}, status=403)
+
+    return render(request, 'crm/gyms/gym_services.html', context)
+
+
+@gym_employee_allowed
 def gym_tickets(request, gym_id):
     gym = Gym.objects.get(id=gym_id)
 
@@ -326,7 +498,8 @@ def buy_gym_ticket_as_emp(request, gym_id):
 def clients_gyms_list(request):
     context = {
         'segment': 'clients_gym_list',
-        'gyms': Gym.objects.all()
+        'gyms': Gym.objects.all(),
+        'user_favorites': request.user.clientprofile.favorites_gyms.all()
     }
     return render(request, 'crm/clients_side/gyms_list.html', context)
 

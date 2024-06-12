@@ -15,6 +15,7 @@
                         <table id="gymsTable" class="table table-striped table-bordered">
                             <thead>
                             <tr>
+                                <th></th>
                                 <th>Name</th>
                                 <th>Address</th>
                                 <th>Lowest price</th>
@@ -25,12 +26,13 @@
                             <tbody>
                             {% for gym in gyms %}
                                 <tr>
-                                    <td><a href="{% url 'clients_gyms_details' gym_id=gym.id%}" class="btn link-success">{{ gym.name }} - {{ gym.base_company.company_name }}</a></td>
+                                    <td>
+                                        <i class="fa {% if gym in user_favorites %}fa-heart text-danger{% else %}fa-heart-o{% endif %} favorite-icon" data-id="{{ gym.id }}"></i>
+                                    </td>
+                                    <td><a href="{% url 'clients_gyms_details' gym_id=gym.id %}" class="btn link-success">{{ gym.name }} - {{ gym.base_company.company_name }}</a></td>
                                     <td>{{ gym.address }}</td>
-                                    <td>{% if gym.get_lowest_pricing %}
-                                        {{ gym.get_lowest_pricing }}{% endif %}</td>
-                                    <td>{% if gym.get_highest_pricing %}
-                                        {{ gym.get_highest_pricing }}{% endif %}</td>
+                                    <td>{% if gym.get_lowest_pricing %}{{ gym.get_lowest_pricing }}{% endif %}</td>
+                                    <td>{% if gym.get_highest_pricing %}{{ gym.get_highest_pricing }}{% endif %}</td>
                                     <td>{% if gym.average_rating %}{{ gym.average_rating }}{% endif %}</td>
                                 </tr>
                             {% endfor %}
@@ -48,6 +50,32 @@
                 "scrollCollapse": true,
                 "scrollY": '1000px',
                 "pageLength": 50,
+            });
+
+            // Handle favorite icon click
+            $('.favorite-icon').click(function () {
+                var icon = $(this);
+                var gymId = icon.data('id');
+                var isFavorite = icon.hasClass('fa-heart');
+
+                $.ajax({
+                    type: 'POST',
+                    url: "{% url 'toggle_favorite_gym' %}",
+                    data: {
+                        'gym_id': gymId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        if (response.status === 'added') {
+                            icon.removeClass('fa-heart-o').addClass('fa-heart text-danger');
+                        } else if (response.status === 'removed') {
+                            icon.removeClass('fa-heart text-danger').addClass('fa-heart-o');
+                        }
+                    },
+                    error: function (response) {
+                        console.log('Error:', response);
+                    }
+                });
             });
         });
     </script>

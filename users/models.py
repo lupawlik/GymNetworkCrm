@@ -62,9 +62,16 @@ class Client(User):
     class Meta:
         proxy = True
 
+    def count_gym_entrances(self, gym_id):
+        return TicketEntrance.objects.filter(
+            ticket__user=self,
+            ticket__gym_id=gym_id
+        ).count()
+
 
 class ClientProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    favorites_gyms = models.ManyToManyField(Gym, related_name='favorites_gyms', blank=True)
 
 
 @receiver(post_save, sender=Client)

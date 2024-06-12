@@ -6,3 +6,6 @@ admin.site.register(BaseCompanyAddress)
 
 admin.site.register(Gym)
 admin.site.register(GymAddress)
+admin.site.register(GymPricing)
+
+admin.site.register(Assortment)
