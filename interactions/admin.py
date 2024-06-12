@@ -10,3 +10,6 @@ admin.site.register(TicketTempCode)
 admin.site.register(Agreement)
 admin.site.register(NewsletterAgree)
 admin.site.register(PromotionsAgree)
+
+admin.site.register(Campaign)
+admin.site.register(PushNotification)

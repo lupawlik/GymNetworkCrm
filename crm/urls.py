@@ -18,6 +18,7 @@ urlpatterns = [
     path('gym-details/<int:gym_id>/assortment/', views.gym_assortment, name="gym_assortment"),
     path('gym-details/<int:gym_id>/services/', views.gym_service, name="gym_service"),
     path('gym-details/<int:gym_id>/clients/', views.gym_clients, name="gym_clients"),
+    path('gym-details/<int:gym_id>/campaigns/', views.gym_campaigns, name="gym_campaigns"),
     path('gym-details/<int:gym_id>/client-details/<int:client_id>', views.client_details, name="client_details"),
 
 

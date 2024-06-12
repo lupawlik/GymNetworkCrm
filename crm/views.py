@@ -10,13 +10,15 @@ from django.utils import timezone
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from users.utils import panel_admin_allowed, gym_employee_allowed, user_is_client, user_is_panel_admin, \
     user_is_employee, client_allowed, check_if_client_is_connected_with_gym
 from crm.models import BaseCompany, BaseCompanyAddress, Gym, GymAddress, GymPricing, Assortment, Services
 from users.models import Ticket, Client, TicketEntrance
 from django.core.exceptions import ObjectDoesNotExist
-from interactions.models import NewsletterAgree, PromotionsAgree
+from interactions.models import NewsletterAgree, PromotionsAgree, PushNotification, Campaign, EmailNotification
+from django.core.mail import send_mail
+from django.conf import settings
 
 
 def index(request):
@@ -187,6 +189,70 @@ def network_clients(request):
     }
 
     return render(request, 'crm/network_clients.html', context)
+
+
+@gym_employee_allowed
+def gym_campaigns(request, gym_id):
+    gym = Gym.objects.get(id=gym_id)
+
+    tickets = Ticket.objects.filter(gym=gym).select_related('user')
+
+    clients = {}
+    for ticket in tickets:
+        if ticket.user not in clients:
+            clients[ticket.user] = ticket.is_valid()
+
+    context = {
+        'parent': 'your_gyms',
+        'gym_id': gym.id,
+        'segment': 'gym_campaigns',
+        'clients': clients,
+        'campaigns': Campaign.objects.filter(gym=gym).order_by('-id')
+    }
+
+    if request.method == "POST":
+        title = request.POST.get('title')
+        message = request.POST.get('message')
+        clients = request.POST.getlist('clients')
+        campaign_type = request.POST.get('type')
+
+        campaign = Campaign.objects.create(
+            gym=gym,
+            title=title,
+            message=message,
+            type=campaign_type
+        )
+
+        recipient_list = []
+        for client_id in clients:
+            client = get_object_or_404(Client, id=client_id)
+            campaign.clients.add(client)
+
+            if campaign_type == 'push':
+                PushNotification.objects.create(campaign=campaign, user=client)
+            elif campaign_type == 'mail':
+                email_notification = EmailNotification.objects.create(campaign=campaign, user=client)
+
+                if settings.DEFAULT_FROM_EMAIL and settings.EMAIL_HOST_PASSWORD:
+                    recipient_list.append(client.email)
+                    email_notification.is_sent = True
+                    email_notification.sent_at = timezone.now()
+
+                email_notification.save()
+
+        if campaign_type == 'mail' and recipient_list:
+            send_mail(
+                subject=f"{campaign.title} - {campaign.gym.base_company.company_name} ({campaign.gym.name})",
+                message=campaign.message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=recipient_list,
+            )
+
+        campaign.save()
+
+        return redirect('gym_campaigns', gym_id=gym_id)
+
+    return render(request, 'crm/gyms/gym_campaigns.html', context)
 
 
 @gym_employee_allowed

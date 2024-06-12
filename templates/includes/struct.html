@@ -22,6 +22,15 @@
             {% endif %}
 
             <main class="ms-sm-auto px-md-4 {% if user.is_authenticated %} col-9 {% else %}col-12 {% endif %}">
+                {% for push in request.unread_push %}
+                    <div class="push-notification alert alert-info" role="alert">
+                        <h4>{{ push.campaign.title }} - {{ push.campaign.gym.name }}</h4>
+                        <p>{{ push.campaign.message }}</p>
+                        <small>Received: {{ push.campaign.created_at }}</small>
+                        <button class="btn btn-sm btn-primary mt-2 mark-as-read" data-id="{{ push.id }}">Mark as read
+                        </button>
+                    </div>
+                {% endfor %}
                 {% block content %}{% endblock content %}
             </main>
         </div>
@@ -31,6 +40,25 @@
     {% endblock footer %}
 </main>
 
+<script>
+    $(document).ready(function () {
+        $('.mark-as-read').click(function () {
+            var button = $(this);
+            var notificationId = button.data('id');
+
+            $.ajax({
+                url: "{% url 'mark_push_as_read' push_id=0 %}".replace('0', notificationId),
+                method: "POST",
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function () {
+                    button.closest('.push-notification').remove();
+                }
+            });
+        });
+    });
+</script>
 {% block extra_js %}{% endblock extra_js %}
 
 </body>

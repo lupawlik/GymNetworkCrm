@@ -1,6 +1,6 @@
 from random import randrange
 from crm.models import Gym
-from interactions.models import Rating, RatingResponse, TicketTempCode, NewsletterAgree, PromotionsAgree
+from interactions.models import Rating, RatingResponse, TicketTempCode, NewsletterAgree, PromotionsAgree, PushNotification
 from django.http import JsonResponse
 from users.utils import client_allowed
 from users.models import Ticket, TicketEntrance
@@ -180,6 +180,19 @@ def export_users_agreement(request, gym_id):
     else:
         return JsonResponse({'error': 'Invalid export type'}, status=400)
 
-    print(users)
     user_data = "\n".join([f"{user.user.username} ({user.user.email})" for user in users])
     return JsonResponse({'users': user_data})
+
+@require_POST
+@client_allowed
+def mark_push_as_read(request, push_id):
+    push = PushNotification.objects.get(id=push_id)
+
+    if push.user != request.user:
+        return JsonResponse({'msg': 'You dont have access'}, status=403)
+
+    push.is_opened = True
+    push.opened_at = timezone.now()
+    push.save()
+
+    return JsonResponse({'msg': 'ok'}, status=200)

@@ -61,7 +61,49 @@ class PromotionsAgree(Agreement):
     def __str__(self):
         return f'Promotion agree for {self.user.username} in gym {self.gym.name}'
 
+
 class NewsletterAgree(Agreement):
     def __str__(self):
         return f'Newsletter agree for {self.user.username} in gym {self.gym.name}'
 
+
+class Campaign(models.Model):
+    gym = models.ForeignKey(Gym, on_delete=models.CASCADE, related_name='camapaigns', null=True, blank=False)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    type = models.CharField(max_length=50,
+                            choices=(('push', 'Push Notification'), ('mail', 'Mail'), ('phone', 'Phone')))
+    clients = models.ManyToManyField(User)
+    status = models.CharField(max_length=50, default='ongoing')
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def opened_by(self):
+        return f"{self.push_notifications.filter(is_opened=True).count()} / {self.push_notifications.all().count()}"
+
+    @property
+    def opened_by_clients(self):
+        return self.push_notifications.filter(is_opened=True)
+
+
+class PushNotification(models.Model):
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='push_notifications')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_opened = models.BooleanField(default=False)
+    opened_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.campaign.title} - {self.user.username}"
+
+
+class EmailNotification(models.Model):
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_sent = models.BooleanField(default=False)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.campaign.title} - {self.user.username}"
